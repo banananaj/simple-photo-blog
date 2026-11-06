@@ -370,10 +370,76 @@
   max-width: none;
 }
 
+.tagedit-pic {
+  position: relative;
+}
+
 .tagedit-card img {
   width: 100%;
   height: auto;
   cursor: pointer;
+}
+
+/* The eye: sits on the picture, quiet until hovered, always reachable. */
+.admin .tagedit-eye {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  min-height: 36px;
+  width: 36px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-color: transparent;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--color-paper) 85%, transparent);
+  color: var(--color-ink);
+}
+
+.admin .tagedit-eye:hover,
+.admin .tagedit-eye:focus-visible {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.admin .tagedit-eye[aria-pressed="true"] {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* Selection bar: appears at the foot while something is selected. */
+.tagedit-bar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-lg);
+  transform: translateX(-50%);
+  z-index: var(--z-sticky-nav);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  max-width: calc(100% - 2 * var(--gutter));
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 2px;
+  background: var(--color-card);
+  box-shadow: var(--shadow-card);
+}
+
+.tagedit-bar p {
+  margin-right: var(--space-sm);
+  color: var(--color-ink);
+  max-width: none;
+}
+
+.admin .tagedit-danger {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.admin .tagedit-danger:hover {
+  background: var(--color-error);
+  color: var(--color-paper);
 }
 
 .tagedit-card label {

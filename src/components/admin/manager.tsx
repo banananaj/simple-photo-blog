@@ -77,8 +77,7 @@ export function Manager() {
     await load();
   };
 
-  const setHidden = async (hidden: boolean) => {
-    const ids = [...selected];
+  const setHidden = async (hidden: boolean, ids: string[] = [...selected]) => {
     if (ids.length === 0) return;
     setBusy(hidden ? "Hiding…" : "Showing…");
     const res = await fetch("/admin/api/catalog", {
@@ -92,8 +91,7 @@ export function Manager() {
     await load();
   };
 
-  const remove = async () => {
-    const ids = [...selected];
+  const remove = async (ids: string[] = [...selected]) => {
     if (ids.length === 0) return;
     if (!window.confirm(`Delete ${ids.length} photograph${ids.length === 1 ? "" : "s"} and their files? This cannot be undone.`)) return;
     setBusy("Deleting…");
@@ -138,15 +136,6 @@ export function Manager() {
         <button type="button" className="admin-primary" onClick={save} disabled={dirty.length === 0 || Boolean(busy)}>
           Save changes ({dirty.length})
         </button>
-        <button type="button" onClick={() => setHidden(true)} disabled={selected.size === 0 || Boolean(busy)}>
-          Hide selected
-        </button>
-        <button type="button" onClick={() => setHidden(false)} disabled={selected.size === 0 || Boolean(busy)}>
-          Show selected
-        </button>
-        <button type="button" onClick={remove} disabled={selected.size === 0 || Boolean(busy)}>
-          Delete selected ({selected.size})
-        </button>
         <button type="button" onClick={load} disabled={Boolean(busy)}>
           Reload
         </button>
@@ -156,7 +145,18 @@ export function Manager() {
           {message}
         </p>
       )}
-      <TagEditor items={shown} onChange={onChange} selected={selected} onSelect={setSelected} />
+      <TagEditor
+        items={shown}
+        onChange={onChange}
+        selected={selected}
+        onSelect={setSelected}
+        onToggleHidden={(id, hidden) => setHidden(hidden, [id])}
+        actions={[
+          { label: "Hide", onClick: (ids) => setHidden(true, ids) },
+          { label: "Show", onClick: (ids) => setHidden(false, ids) },
+          { label: "Delete", onClick: (ids) => remove(ids), danger: true },
+        ]}
+      />
     </section>
   );
 }

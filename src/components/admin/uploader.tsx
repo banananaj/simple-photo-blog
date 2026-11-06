@@ -94,6 +94,7 @@ export function Uploader() {
           alt: d.alt || d.place,
           credit: "",
           tags: d.tags,
+          hidden: Boolean(d.hidden),
           uploadedAt: new Date().toISOString(),
         });
       } catch (e) {
@@ -216,7 +217,18 @@ export function Uploader() {
           ))}
         </ul>
       )}
-      <TagEditor items={drafts} onChange={onChange} selected={selected} onSelect={setSelected} />
+      <TagEditor
+        items={drafts}
+        onChange={onChange}
+        selected={selected}
+        onSelect={setSelected}
+        onToggleHidden={(id, hidden) => onChange(drafts.map((d) => (d.id === id ? { ...d, hidden } : d)))}
+        actions={[
+          { label: "Hide", onClick: (ids) => onChange(drafts.map((d) => (ids.includes(d.id) ? { ...d, hidden: true } : d))) },
+          { label: "Show", onClick: (ids) => onChange(drafts.map((d) => (ids.includes(d.id) ? { ...d, hidden: false } : d))) },
+          { label: "Drop from batch", onClick: (ids) => { setDrafts((prev) => prev.filter((d) => !ids.includes(d.id))); setSelected(new Set()); }, danger: true },
+        ]}
+      />
     </section>
   );
 }
