@@ -16,7 +16,7 @@ Done and verified:
 Not done / open:
 - Hallmark finish review (fresh-context subagent per `references/gates.md` § 6) was started and did not complete. Run it again before calling the visitor page shipped, then record `finish-review: …` in the stamp.
 - No commit has been made yet; everything is staged. The owner decides when to commit/push. Never commit secrets (public repository).
-- Owner still to provide: About text, real photographs, Upstash terms acceptance (for view counts); S3 only if/when Blob gets too costly.
+- Owner still to provide: About text, real photographs, Upstash terms acceptance (for view counts); S3 is off the table (owner decision 2026-11-06).
 - Deployment: Vercel project `simple-photo-blog` (team banananajs-projects) linked in `.vercel/`, GitHub repo banananaj/simple-photo-blog connected (push to main = production), domains gidong.pics + www (308 to apex) attached, DNS at hosting.kr already points to Vercel. Blob store `gidong-photos` (public) linked; sample photos live there. Vercel token file: `~/.vercel-token`; CLI at `~/.npm-global/bin/vercel`, always pass `--token $(cat ~/.vercel-token) --scope banananajs-projects`.
 
 ## Conventions
