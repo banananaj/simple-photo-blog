@@ -1,0 +1,399 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: Atelier (deal 1/3, seed gidong-pics-personal-photo-7829·7cd84016·2026-11-06·r0)
+ * nav: left sidebar by the owner's request, the name and two links with the filter folded beneath; a top bar under 60rem · signature: the stream of photographs in a new order on every visit, each hung with the place it was taken · states: loading (aspect boxes reserved), empty (no photograph matches the filter), full
+ * axes: light/roman-serif/cool · posture: restrained · contrast: pass · surface: paper lifted to near-white and body set in Sentient by the owner's words · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V4 · weakest: E, the shuffle lands after hydration; held the grid at opacity 0 under .js only so a reader without script still sees the stored order */
+/* Hallmark · finish-review: subagent · 8 findings · 8 resolved · gap: the Atelier material (haze, card stock, hairlines) is left out by the owner's words, minimal and white; the theme lends type and paper only */
+@import url("./tokens.css");
+@import url("./base.css");
+
+/* The owner's binding words: a white page, serif throughout. The theme's limewash
+   paper is lifted toward white (never absolute) and Sentient carries body text too. */
+:root {
+  --color-paper: oklch(98.6% 0.004 80);
+  --color-paper-2: oklch(96.4% 0.006 78);
+  --color-paper-3: oklch(93.5% 0.008 76);
+  --font-body: "Sentient", Georgia, serif;
+  --side-width: 240px;
+  --stream-cols: 3;
+}
+
+body {
+  color: var(--color-ink-2);
+  line-height: 1.6;
+  font-weight: var(--serif-small);
+  font-synthesis: none;
+  display: grid;
+  grid-template-columns: var(--side-width) minmax(0, 1fr);
+  min-height: 100dvh;
+  max-width: 1760px;
+  margin-inline: auto;
+}
+
+h1,
+h2 {
+  font-weight: var(--display-weight);
+  color: var(--color-ink);
+}
+
+/* Sidebar — the name, two links, the folded filter. */
+.side {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding: var(--space-2xl) var(--space-xl);
+  overflow-y: auto;
+}
+
+.side-name {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-display);
+  line-height: 1.05;
+  color: var(--color-ink);
+  max-width: none;
+}
+
+.side-name a,
+.side-nav a,
+.filter summary,
+.credits summary {
+  text-decoration: none;
+}
+
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-size: var(--text-lg);
+  line-height: 1.3;
+}
+
+.side-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-block: calc((1.3em - 44px) / 2);
+  width: fit-content;
+}
+
+.side-nav a[aria-current="page"] {
+  color: var(--color-ink);
+}
+
+.side-nav a,
+.filter a,
+.credits a,
+.lightbox-bar a,
+.lightbox-bar button {
+  transition: color var(--dur-micro) var(--ease-out);
+}
+
+.side-nav a:hover,
+.filter a:hover,
+.credits a:hover {
+  color: var(--color-accent);
+}
+
+.side-nav a:active,
+.filter a:active {
+  color: var(--color-ink);
+}
+
+/* The filter: folded, muted, found by whoever looks for it. */
+.filter,
+.credits {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.credits {
+  margin-top: var(--space-3xl);
+}
+
+.filter {
+  margin-top: auto;
+}
+
+.filter summary,
+.credits summary {
+  cursor: pointer;
+  list-style: none;
+  width: fit-content;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.filter summary::-webkit-details-marker,
+.credits summary::-webkit-details-marker {
+  display: none;
+}
+
+.filter summary:hover,
+.credits summary:hover {
+  color: var(--color-ink);
+}
+
+.filter:not([open]) .filter-groups {
+  display: none;
+}
+
+.filter-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding-top: var(--space-xs);
+}
+
+.filter-head {
+  color: var(--color-ink);
+  max-width: none;
+}
+
+.filter ul,
+.credits ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.filter li a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-block: calc(-1 * var(--space-2xs));
+}
+
+.filter a[aria-current="true"] {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+}
+
+.filter-clear {
+  max-width: none;
+}
+
+.credits li {
+  padding-block: var(--space-2xs);
+}
+
+/* Main: the stream. */
+.main {
+  padding: var(--space-2xl) var(--space-xl) var(--space-3xl) 0;
+  min-width: 0;
+}
+
+.stream {
+  display: grid;
+  grid-template-columns: repeat(var(--stream-cols), minmax(0, 1fr));
+  column-gap: var(--space-lg);
+  align-items: start;
+  transition: opacity var(--dur-short) var(--ease-out);
+}
+
+.stream-col {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.js .stream:not([data-ready]) {
+  opacity: 0;
+}
+
+.stream figure {
+  margin: 0;
+}
+
+.stream-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: zoom-in;
+}
+
+.stream-open:active {
+  opacity: 0.92;
+}
+
+.stream img {
+  width: 100%;
+  height: auto;
+  background: var(--color-paper-2);
+}
+
+.stream figcaption,
+.lightbox figcaption {
+  margin-top: var(--space-xs);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  line-height: 1.4;
+  min-height: 1lh;
+}
+
+.stream-empty {
+  color: var(--color-muted);
+  max-width: none;
+}
+
+/* Lightbox: the full photograph on the same paper, quiet text controls beneath. */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: var(--color-paper);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: var(--space-lg);
+  gap: var(--space-md);
+}
+
+.lightbox-figure {
+  margin: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-figure img {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.lightbox-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  justify-content: center;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.lightbox-bar button,
+.lightbox-bar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-xs);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.lightbox-bar button:hover,
+.lightbox-bar a:hover {
+  color: var(--color-ink);
+}
+
+.lightbox-bar button:active,
+.lightbox-bar a:active {
+  color: var(--color-accent);
+}
+
+.lightbox-bar button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* About and admin: a short prose page. */
+.about {
+  max-width: 60ch;
+}
+
+.about h1 {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-lg);
+}
+
+/* Narrower screens: two columns, then one; the sidebar becomes a top bar. */
+@media (max-width: 80rem) {
+  :root {
+    --stream-cols: 2;
+  }
+}
+
+@media (max-width: 60rem) {
+  :root {
+    --side-width: 0px;
+  }
+
+  body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .side {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-md) var(--space-lg);
+    padding: var(--space-lg) var(--gutter);
+    overflow: visible;
+  }
+
+  .side-name {
+    font-size: var(--text-xl);
+  }
+
+  .side-nav {
+    flex-direction: row;
+    gap: var(--space-lg);
+    font-size: var(--text-md);
+  }
+
+  .filter {
+    margin-top: 0;
+    margin-left: auto;
+  }
+
+  .filter[open] {
+    flex-basis: 100%;
+  }
+
+  .filter ul {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: var(--space-md);
+  }
+
+  .main {
+    padding: var(--space-md) var(--gutter) var(--space-2xl);
+  }
+}
+
+@media (max-width: 40rem) {
+  :root {
+    --stream-cols: 1;
+  }
+
+  .stream-col {
+    gap: var(--space-lg);
+  }
+
+  .lightbox {
+    padding: var(--space-md);
+  }
+}
