@@ -2,11 +2,20 @@
  * nav: a top bar, the name and four links · signature: the tag editor grid with marquee selection · states: loading (Loading…), empty (no photographs), error (red list), full
  * axes: light/roman-serif/cool · posture: restrained · contrast: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P3 H4 E4 S4 R4 V4 · weakest: P, a tool screen has no argument; kept it to hairlines, one filled primary and the paper */
-/* Admin: an app screen on the same paper. Tokens from tokens.css only. */
+/* Admin: a tool, not the gallery. The owner's rule: practicality and readability
+   first, no need to match the site. A system UI face, tighter spacing, denser grid. */
+:root {
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+
 .admin {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-ink);
 }
 
 .admin-bar {
@@ -19,9 +28,8 @@
 }
 
 .admin-name {
-  font-family: var(--font-display);
-  font-weight: var(--display-weight);
-  font-size: var(--text-xl);
+  font-weight: 600;
+  font-size: var(--text-md);
   color: var(--color-ink);
   max-width: none;
 }
@@ -38,6 +46,7 @@
 
 .admin-nav a[aria-current="page"] {
   color: var(--color-ink);
+  font-weight: 600;
   text-decoration: underline;
   text-decoration-color: var(--color-accent);
 }
