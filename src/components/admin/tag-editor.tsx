@@ -201,10 +201,11 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
             ))}
           </select>
         </label>
-        <label className="tagedit-grow">
-          Tags
-          <TagInput value={bulk.tags} onChange={(tags) => setBulk({ ...bulk, tags })} suggestions={suggestions} placeholder="type a tag, press Space" />
-        </label>
+        {/* htmlFor keeps the label bound to the text input, not to the first chip's remove button. */}
+        <div className="tagedit-grow tagedit-field">
+          <label htmlFor="bulk-tags">Tags</label>
+          <TagInput id="bulk-tags" value={bulk.tags} onChange={(tags) => setBulk({ ...bulk, tags })} suggestions={suggestions} placeholder="type a tag, press Space" />
+        </div>
         <div className="tagedit-actions">
           <button type="button" onClick={() => applyBulk(items.map((i) => i.id))}>
             Apply to all
@@ -267,10 +268,10 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
                 ))}
               </select>
             </label>
-            <label>
-              Tags
-              <TagInput compact value={it.tags} onChange={(tags) => update([it.id], { tags })} suggestions={suggestions} />
-            </label>
+            <div className="tagedit-field">
+              <label htmlFor={`tags-${it.id}`}>Tags</label>
+              <TagInput id={`tags-${it.id}`} compact value={it.tags} onChange={(tags) => update([it.id], { tags })} suggestions={suggestions} />
+            </div>
             <label>
               Rating
               <select value={it.rating} onChange={(e) => update([it.id], { rating: Number(e.target.value) })}>
