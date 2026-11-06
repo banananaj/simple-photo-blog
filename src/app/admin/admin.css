@@ -290,7 +290,11 @@
 .uploader-pick {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-md);
+  gap: var(--space-xs);
+}
+
+.admin-actions .uploader-pick + p {
+  margin-left: var(--space-sm);
 }
 
 .uploader-drop {
@@ -304,6 +308,11 @@
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.uploader-drop:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .uploader-drop:has(input:focus-visible) {
