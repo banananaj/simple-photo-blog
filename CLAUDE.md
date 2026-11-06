@@ -27,6 +27,7 @@ Not done / open:
 - Filter state lives in the URL (`?season=&place=&tag=`), read client-side so the page stays static.
 - Admin API routes sit under `/admin/api/*` on purpose: the basic-auth realm of `/admin/` then covers them and browsers send credentials pre-emptively. `src/proxy.ts` matches `/admin/:path*`.
 - The visitor shell (sidebar grid) is the `(site)` route group; `/grid-view` and `/admin` have their own shells.
+- The admin does not have to match the site: the owner wants practicality and readability (system UI face, dense grid, clear controls). Only the visitor UI is bound by the minimal, serif, white rules.
 - Keep the visitor UI minimal: no icons, badges, buttons with fills, social widgets, footers. Functions (filter, download) exist but stay visually quiet and keyboard/screen-reader reachable.
 - Do not invent captions, About text, admin features, metrics or testimonials.
 
