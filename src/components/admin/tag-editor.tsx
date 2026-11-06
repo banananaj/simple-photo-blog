@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { parseTags, SEASONS } from "@/lib/photos";
+import { parseTags, RATINGS, SEASONS } from "@/lib/photos";
 
 export type EditItem = {
   id: string;
@@ -12,6 +12,7 @@ export type EditItem = {
   season: string;
   tags: string[];
   alt: string;
+  rating: number;
   note?: string;
   hidden?: boolean;
 };
@@ -68,7 +69,7 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
     additive: boolean;
   } | null>(null);
   const [marquee, setMarquee] = useState<Rect | null>(null);
-  const [bulk, setBulk] = useState({ place: "", season: "", tags: "" });
+  const [bulk, setBulk] = useState({ place: "", season: "", tags: "", rating: "" });
 
   const update = (ids: Iterable<string>, patch: Partial<EditItem> | ((it: EditItem) => Partial<EditItem>)) => {
     const set = new Set(ids);
@@ -81,6 +82,7 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
       place: bulk.place.trim() ? bulk.place.trim() : it.place,
       season: bulk.season ? bulk.season : it.season,
       tags: add.length ? [...new Set([...it.tags, ...add])] : it.tags,
+      rating: bulk.rating ? Number(bulk.rating) : it.rating,
     }));
   };
 
@@ -180,6 +182,17 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
             ))}
           </select>
         </label>
+        <label>
+          Rating
+          <select value={bulk.rating} onChange={(e) => setBulk({ ...bulk, rating: e.target.value })}>
+            <option value="">keep</option>
+            {RATINGS.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="tagedit-grow">
           Tags
           <input type="text" value={bulk.tags} onChange={(e) => setBulk({ ...bulk, tags: e.target.value })} placeholder="comma separated" />
@@ -257,6 +270,16 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
                   if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 }}
               />
+            </label>
+            <label>
+              Rating
+              <select value={it.rating} onChange={(e) => update([it.id], { rating: Number(e.target.value) })}>
+                {RATINGS.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
             </label>
             <label>
               Alt text

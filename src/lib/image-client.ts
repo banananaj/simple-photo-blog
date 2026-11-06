@@ -9,6 +9,8 @@ export type Prepared = {
   id: string;
   name: string;
   taken: string;
+  /** 1–5 from XMP (xmp:Rating) or the Windows EXIF rating; 1 when absent. */
+  rating: number;
   preview: { blob: Blob; width: number; height: number; url: string };
   full: { blob: Blob; width: number; height: number };
 };
@@ -45,19 +47,25 @@ export function seasonOf(date: Date | null): "spring" | "summer" | "autumn" | "w
   return "winter";
 }
 
-export async function takenDate(file: File): Promise<Date | null> {
+type Meta = { taken: Date | null; rating: number };
+
+export async function readMeta(file: File): Promise<Meta> {
   try {
     const exifr = (await import("exifr")).default;
-    const data = (await exifr.parse(file, ["DateTimeOriginal"])) as { DateTimeOriginal?: Date } | undefined;
-    return data?.DateTimeOriginal instanceof Date ? data.DateTimeOriginal : null;
+    const data = (await exifr.parse(file, { tiff: true, exif: true, xmp: true, mergeOutput: true })) as
+      | { DateTimeOriginal?: Date; Rating?: unknown; xmp?: { Rating?: unknown } }
+      | undefined;
+    const raw = Number(data?.Rating ?? data?.xmp?.Rating);
+    const rating = raw >= 1 && raw <= 5 ? Math.round(raw) : 1;
+    return { taken: data?.DateTimeOriginal instanceof Date ? data.DateTimeOriginal : null, rating };
   } catch {
-    return null;
+    return { taken: null, rating: 1 };
   }
 }
 
 export async function prepare(file: File): Promise<Prepared> {
   const buf = await file.arrayBuffer();
-  const taken = await takenDate(file);
+  const { taken, rating } = await readMeta(file);
   const stamp = (taken ?? new Date(file.lastModified)).toISOString().slice(0, 10).replaceAll("-", "");
   const id = `${stamp}-${(await sha1(buf)).slice(0, 8)}`;
   const bitmap = await createImageBitmap(new Blob([buf], { type: file.type }), { imageOrientation: "from-image" });
@@ -68,6 +76,7 @@ export async function prepare(file: File): Promise<Prepared> {
       id,
       name: file.name,
       taken: taken ? taken.toISOString().slice(0, 10) : "",
+      rating,
       preview: { ...preview, url: URL.createObjectURL(preview.blob) },
       full,
     };

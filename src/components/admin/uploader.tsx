@@ -42,6 +42,7 @@ export function Uploader() {
           season: seasonOf(taken),
           tags: [],
           alt: "",
+          rating: p.rating,
           note: `${file.name}${p.taken ? ` · ${p.taken}` : ""}`,
           prepared: p,
           taken: p.taken,
@@ -94,6 +95,7 @@ export function Uploader() {
           alt: d.alt || d.place,
           credit: "",
           tags: d.tags,
+          rating: d.rating,
           hidden: Boolean(d.hidden),
           uploadedAt: new Date().toISOString(),
         });

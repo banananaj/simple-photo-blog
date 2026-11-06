@@ -23,7 +23,7 @@ Not done / open:
 
 - Every colour and font goes through a token in `src/app/tokens.css` (Hallmark Floor). Spacing uses `--space-*`. No literal colours in component CSS.
 - Photographs are plain `<img>` with width/height (no `next/image`): resizing happens at upload time to stay inside the Vercel Hobby image quota. `@next/next/no-img-element` is off on purpose.
-- Random order: the browser draws one seed per page load (`useSyncExternalStore`, `src/components/stream.tsx`); the server renders stored order; `.js .stream:not([data-ready])` hides nothing from no-script readers.
+- Order: `weightedOrder()` in `src/lib/photos.ts`: per visit each photo gets `random() × rating²` and the list sorts on it (rating from XMP at upload, 1 when absent, editable in admin). The browser draws one seed per page load (`useSyncExternalStore`, `src/components/stream.tsx`); the server renders stored order; `.js .stream:not([data-ready])` hides nothing from no-script readers.
 - Filter state lives in the URL (`?season=&place=&tag=`), read client-side so the page stays static.
 - Admin API routes sit under `/admin/api/*` on purpose: the basic-auth realm of `/admin/` then covers them and browsers send credentials pre-emptively. `src/proxy.ts` matches `/admin/:path*`.
 - The visitor shell (sidebar grid) is the `(site)` route group; `/grid-view` and `/admin` have their own shells.

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { Lightbox } from "@/components/lightbox";
-import { shuffle, type Photo } from "@/lib/photos";
+import { weightedOrder, type Photo } from "@/lib/photos";
 
 type Props = { photos: Photo[] };
 
@@ -55,7 +55,7 @@ export function Stream({ photos }: Props) {
   const seed = useSeed();
   const columns = useColumns();
 
-  const list = useMemo(() => (seed === null ? photos : shuffle(photos, mulberry32(seed))), [photos, seed]);
+  const list = useMemo(() => (seed === null ? photos : weightedOrder(photos, mulberry32(seed))), [photos, seed]);
   const dealt = useMemo(() => distribute(list, columns), [list, columns]);
 
   const [open, setOpen] = useState<number | null>(null);

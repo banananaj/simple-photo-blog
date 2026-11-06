@@ -12,6 +12,8 @@ export type Photo = {
   alt: string;
   credit: string;
   tags: string[];
+  /** 1–5 from the file's XMP rating (or set in the admin); unrated counts as 1. */
+  rating?: number;
   /** Uploaded but not shown to visitors. */
   hidden?: boolean;
   uploadedAt?: string;
@@ -79,6 +81,30 @@ export function filterFromPath(pathname: string): Filter {
 /** "a, b ,c" → ["a", "b", "c"], trimmed, lower-cased, deduplicated. */
 export function parseTags(text: string): string[] {
   return [...new Set(text.split(/[,\n]/).map((t) => t.trim().toLowerCase()).filter(Boolean))];
+}
+
+export const RATINGS = [5, 4, 3, 2, 1] as const;
+
+export function ratingOf(p: Photo): number {
+  const r = Math.round(Number(p.rating));
+  return r >= 1 && r <= 5 ? r : 1;
+}
+
+/** Exposure weight: rating squared, so 5:4:3:2:1 stars show as 25:16:9:4:1. */
+export function weightOf(p: Photo): number {
+  return ratingOf(p) ** 2;
+}
+
+/**
+ * The visitor order: every photograph draws a number, multiplies it by its
+ * weight, and the stream is sorted on that key. Everything still appears; the
+ * strong ones come first far more often.
+ */
+export function weightedOrder(list: Photo[], random: () => number = Math.random): Photo[] {
+  return list
+    .map((p) => ({ p, key: random() * weightOf(p) }))
+    .sort((a, b) => b.key - a.key)
+    .map(({ p }) => p);
 }
 
 /** Fisher–Yates on a copy. */

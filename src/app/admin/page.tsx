@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { loadCatalog } from "@/lib/catalog";
-import { SEASONS, tags as allTags } from "@/lib/photos";
+import { RATINGS, ratingOf, SEASONS, tags as allTags } from "@/lib/photos";
 import { getViews, viewsEnabled } from "@/lib/views";
 
 export const metadata = { title: "Dashboard" };
@@ -13,6 +13,7 @@ async function Dashboard() {
   const views = await getViews().catch(() => null);
   const bySeason = SEASONS.map((s) => [s, photos.filter((p) => p.season === s).length] as const);
   const hidden = photos.filter((p) => p.hidden).length;
+  const byRating = RATINGS.map((r) => [r, photos.filter((p) => ratingOf(p) === r).length] as const);
   const untagged = photos.filter((p) => p.tags.length === 0).length;
   const noPlace = photos.filter((p) => !p.place).length;
   const tagCounts = allTags(photos)
@@ -42,6 +43,12 @@ async function Dashboard() {
           {bySeason.map(([s, n]) => (
             <div key={s}>
               <dt>{s}</dt>
+              <dd className="num">{n}</dd>
+            </div>
+          ))}
+          {byRating.map(([r, n]) => (
+            <div key={r}>
+              <dt>{r} star{r === 1 ? "" : "s"}</dt>
               <dd className="num">{n}</dd>
             </div>
           ))}

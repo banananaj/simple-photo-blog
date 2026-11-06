@@ -1,9 +1,9 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
-import { deleteFiles, loadCatalog, saveCatalog } from "@/lib/catalog";
+import { cleanRating, deleteFiles, loadCatalog, saveCatalog } from "@/lib/catalog";
 import { parseTags, SEASONS, type Photo } from "@/lib/photos";
 
-type Patch = Partial<Pick<Photo, "place" | "season" | "tags" | "alt" | "taken" | "hidden">> & { id: string };
+type Patch = Partial<Pick<Photo, "place" | "season" | "tags" | "alt" | "taken" | "hidden" | "rating">> & { id: string };
 type Body = { add?: Photo[]; update?: Patch[]; remove?: string[] };
 
 const ID = /^[a-z0-9-]{4,64}$/i;
@@ -32,6 +32,7 @@ function cleanPhoto(p: Photo): Photo | null {
     alt: String(p.alt ?? "").trim() || String(p.place ?? "").trim(),
     credit: String(p.credit ?? ""),
     tags: cleanTags(p.tags),
+    rating: cleanRating(p.rating),
     hidden: Boolean(p.hidden),
     uploadedAt: p.uploadedAt ?? new Date().toISOString(),
   };
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
       alt: patch.alt !== undefined ? String(patch.alt).trim() : cur.alt,
       taken: patch.taken !== undefined ? String(patch.taken) : cur.taken,
       hidden: patch.hidden !== undefined ? Boolean(patch.hidden) : cur.hidden,
+      rating: patch.rating !== undefined ? cleanRating(patch.rating) : cur.rating,
     });
     updated++;
   }

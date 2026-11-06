@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TagEditor, type EditItem } from "@/components/admin/tag-editor";
-import type { Photo } from "@/lib/photos";
+import { ratingOf, type Photo } from "@/lib/photos";
 
 type Row = EditItem & { photo: Photo };
 
@@ -16,6 +16,7 @@ function toRow(p: Photo): Row {
     season: p.season,
     tags: p.tags ?? [],
     alt: p.alt,
+    rating: ratingOf(p),
     note: p.taken || undefined,
     hidden: Boolean(p.hidden),
     photo: p,
@@ -50,7 +51,12 @@ export function Manager() {
   const dirty = useMemo(
     () =>
       (rows ?? []).filter(
-        (r) => r.place !== r.photo.place || r.season !== r.photo.season || r.alt !== r.photo.alt || !sameTags(r.tags, r.photo.tags ?? []),
+        (r) =>
+          r.place !== r.photo.place ||
+          r.season !== r.photo.season ||
+          r.alt !== r.photo.alt ||
+          r.rating !== ratingOf(r.photo) ||
+          !sameTags(r.tags, r.photo.tags ?? []),
       ),
     [rows],
   );
@@ -69,7 +75,9 @@ export function Manager() {
     const res = await fetch("/admin/api/catalog", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ update: dirty.map((r) => ({ id: r.id, place: r.place, season: r.season, tags: r.tags, alt: r.alt })) }),
+      body: JSON.stringify({
+        update: dirty.map((r) => ({ id: r.id, place: r.place, season: r.season, tags: r.tags, alt: r.alt, rating: r.rating })),
+      }),
     });
     const data = await res.json();
     setMessage(res.ok ? `Saved ${data.updated} change${data.updated === 1 ? "" : "s"}.` : `Save failed (${res.status}).`);

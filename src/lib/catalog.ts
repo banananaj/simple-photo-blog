@@ -25,9 +25,15 @@ function normalise(p: Partial<Photo> & { id: string }): Photo {
     alt: p.alt ?? p.place ?? "",
     credit: p.credit ?? "",
     tags: Array.isArray(p.tags) ? p.tags : [],
+    rating: cleanRating(p.rating),
     hidden: Boolean(p.hidden),
     uploadedAt: p.uploadedAt,
   };
+}
+
+export function cleanRating(r: unknown): number {
+  const n = Math.round(Number(r));
+  return n >= 1 && n <= 5 ? n : 1;
 }
 
 function hasToken(): boolean {

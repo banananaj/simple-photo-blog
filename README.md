@@ -38,7 +38,7 @@ node scripts/photos.mjs list
 node scripts/photos.mjs remove <id>
 ```
 
-Each file becomes a preview (WebP, 1600px long edge) for the stream and a full-size JPEG (3000px long edge; downloads use `?download=1` on Blob or `Content-Disposition` on S3). The season is read from the EXIF date unless `--season` is given; `--alt` sets the image description (defaults to the place). Commit the updated `photos.json` and push; Vercel redeploys.
+Each file becomes a preview (WebP, 1600px long edge) for the stream and a full-size JPEG (3000px long edge; downloads use `?download=1` on Blob or `Content-Disposition` on S3). The season is read from the EXIF date unless `--season` is given; the rating from XMP `xmp:Rating` unless `--rating` is given (1 when absent, and it weights the visitor order by rating²); `--alt` sets the image description (defaults to the place). Commit the updated `photos.json` and push; Vercel redeploys.
 
 ## Design checks
 

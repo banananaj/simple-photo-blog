@@ -123,8 +123,10 @@ async function add(files, opts) {
   const data = await loadData();
   for (const file of files) {
     const buf = await readFile(file);
-    const exif = await exifr.parse(buf, ["DateTimeOriginal"]).catch(() => null);
+    const exif = await exifr.parse(buf, { tiff: true, exif: true, xmp: true, mergeOutput: true }).catch(() => null);
     const taken = exif?.DateTimeOriginal instanceof Date ? exif.DateTimeOriginal : null;
+    const xmpRating = Number(exif?.Rating ?? exif?.xmp?.Rating);
+    const rating = opts.rating ? Number(opts.rating) : xmpRating >= 1 && xmpRating <= 5 ? Math.round(xmpRating) : 1;
     const hash = createHash("sha1").update(buf).digest("hex").slice(0, 8);
     const stamp = (taken ?? new Date()).toISOString().slice(0, 10).replaceAll("-", "");
     const id = `${stamp}-${hash}`;
@@ -148,6 +150,7 @@ async function add(files, opts) {
       alt: opts.alt || opts.place,
       credit: opts.credit || "",
       tags: opts.tags ? opts.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean) : [],
+      rating,
       hidden: false,
     });
     console.log(`added ${id}  ${opts.place}  ${preview.width}x${preview.height} / ${full.width}x${full.height}`);
@@ -198,7 +201,7 @@ try {
   else if (cmd === "list") await list();
   else if (cmd === "remove") await remove(files[0]);
   else {
-    console.error("usage: photos.mjs add <file...> --place <caption> [--season <s>] [--alt <t>] [--credit <html>] [--blob|--s3|--local] | migrate --blob|--s3 | list | remove <id>");
+    console.error("usage: photos.mjs add <file...> --place <caption> [--season <s>] [--rating 1-5] [--alt <t>] [--credit <html>] [--blob|--s3|--local] | migrate --blob|--s3 | list | remove <id>");
     process.exit(1);
   }
 } catch (e) {

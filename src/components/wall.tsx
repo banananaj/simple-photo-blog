@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { Lightbox } from "@/components/lightbox";
-import { shuffle, type Photo } from "@/lib/photos";
+import { weightedOrder, type Photo } from "@/lib/photos";
 
 type Props = { photos: Photo[] };
 
@@ -78,7 +78,7 @@ function justify(list: Photo[], units: number): Photo[][] {
 export function Wall({ photos }: Props) {
   const seed = useSeed();
   const units = useUnits();
-  const list = useMemo(() => (seed === null ? photos : shuffle(photos, mulberry32(seed))), [photos, seed]);
+  const list = useMemo(() => (seed === null ? photos : weightedOrder(photos, mulberry32(seed))), [photos, seed]);
   const rows = useMemo(() => justify(list, units), [list, units]);
   const [open, setOpen] = useState<number | null>(null);
   const indexOf = new Map(list.map((p, i) => [p.id, i]));
