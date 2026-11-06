@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Photo } from "@/lib/photos";
+import { downloadHref, type Photo } from "@/lib/photos";
 
 type Props = {
   photos: Photo[];
@@ -88,7 +88,7 @@ export function Lightbox({ photos, index, onChange, onClose }: Props) {
             </button>
           </>
         )}
-        <a href={photo.full.src} download={`gidong-${photo.id}.jpg`}>
+        <a href={downloadHref(photo)} download={`gidong-${photo.id}.jpg`}>
           Download
         </a>
       </div>

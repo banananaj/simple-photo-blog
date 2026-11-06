@@ -32,6 +32,12 @@ export function credits(list: Photo[] = photos): string[] {
   return [...new Set(list.map((p) => p.credit).filter(Boolean))];
 }
 
+/** Full-size file as an attachment: Vercel Blob honours ?download=1; S3 objects carry Content-Disposition. */
+export function downloadHref(photo: Photo): string {
+  const src = photo.full.src;
+  return src.includes(".blob.vercel-storage.com") ? `${src}${src.includes("?") ? "&" : "?"}download=1` : src;
+}
+
 export type Filter = { season?: string; place?: string };
 
 export function apply(list: Photo[], filter: Filter): Photo[] {

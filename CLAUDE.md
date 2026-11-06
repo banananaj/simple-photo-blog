@@ -8,14 +8,14 @@ Done and verified:
 - Next.js 16.4 (App Router, TS, no Tailwind) scaffold, `npm run build` passes, all visitor routes prerendered, `/admin` behind basic auth in `src/proxy.ts` (404 until `ADMIN_USER`/`ADMIN_PASSWORD` are set).
 - Pages: `/` (random stream + lightbox), `/about` (empty on purpose, owner writes it), `/admin` (route only, features still to be specified by the owner).
 - Hallmark build (app scope, theme Atelier, stamp in the first four lines of `src/app/globals.css`), `sloplint --render` clean (0 FAIL / 0 REFLEX / 0 WARN) at 320–1920. Log entry in `.hallmark/log.json`.
-- `scripts/photos.mjs` resizes (WebP preview 1600px, JPEG full 3000px), uploads to S3 or `--local`, writes `src/content/photos.json`. 13 openly licensed stand-in photographs are registered locally (`public/photos/`, git-ignored) and credited in the sidebar; the owner's own photographs replace them.
+- `scripts/photos.mjs` resizes (WebP preview 1600px, JPEG full 3000px), uploads to Vercel Blob (`--blob`, default when `BLOB_READ_WRITE_TOKEN` is set; run with `node --env-file=.env.local`), S3 (`--s3`) or `--local`; `migrate --blob` pushes local files up. 13 openly licensed stand-in photographs are on Blob and credited; the owner's own photographs replace them.
 - Impeccable installed (skill, 4 agents, design hook in `.claude/settings.local.json`); Hallmark skill in `.claude/skills/hallmark`.
 
 Not done / open:
 - Hallmark finish review (fresh-context subagent per `references/gates.md` § 6) was started and did not complete. Run it again before calling the visitor page shipped, then record `finish-review: …` in the stamp.
 - No commit has been made yet; everything is staged. The owner decides when to commit/push. Never commit secrets (public repository).
-- Owner still to provide: Vercel token (file `~/.vercel-token`), GitHub repo + `gh auth login`, S3 bucket + CloudFront base URL, DNS for gidong.pics, About text, admin feature list.
-- Deployment: Vercel project not created yet. Plan in the first session's reply: `vercel link`, `vercel git connect`, env vars, `vercel --prod`, `vercel domains add gidong.pics`.
+- Owner still to provide: About text, admin feature list, real photographs; S3 only if/when Blob gets too costly.
+- Deployment: Vercel project `simple-photo-blog` (team banananajs-projects) linked in `.vercel/`, GitHub repo banananaj/simple-photo-blog connected (push to main = production), domains gidong.pics + www (308 to apex) attached, DNS at hosting.kr already points to Vercel. Blob store `gidong-photos` (public) linked; sample photos live there. Vercel token file: `~/.vercel-token`; CLI at `~/.npm-global/bin/vercel`, always pass `--token $(cat ~/.vercel-token) --scope banananajs-projects`.
 
 ## Conventions
 

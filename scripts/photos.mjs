@@ -2,16 +2,20 @@
 /**
  * photos.mjs — add photographs to the blog.
  *
- *   node scripts/photos.mjs add <file...> --place "Jeju" [--season winter] [--alt "..."] [--credit "..."] [--local]
+ *   node scripts/photos.mjs add <file...> --place "Jeju" [--season winter] [--alt "..."] [--credit "..."] [--blob|--s3|--local]
+ *   node scripts/photos.mjs migrate --blob|--s3      # push files registered with --local to the store
  *   node scripts/photos.mjs list
  *   node scripts/photos.mjs remove <id>
  *
  * For each file: reads EXIF (date), writes a preview (WebP, 1600px on the long edge) and a
- * full-size copy (JPEG, 3000px on the long edge, downloadable), uploads both to S3 (or, with
- * --local, into public/photos/) and appends the record to src/content/photos.json.
+ * full-size copy (JPEG, 3000px on the long edge, downloadable), uploads both and appends the
+ * record to src/content/photos.json.
  *
- * Env (S3 mode): PHOTOS_BUCKET, PHOTOS_BASE_URL (public base, e.g. https://cdn.gidong.pics),
- * AWS_REGION and AWS credentials from the usual chain.
+ * Storage (pick one; default --blob when BLOB_READ_WRITE_TOKEN is set, else --s3):
+ *   --blob   Vercel Blob (public store). Env: BLOB_READ_WRITE_TOKEN (vercel env pull .env.local;
+ *            run with `node --env-file=.env.local scripts/photos.mjs …`).
+ *   --s3     Amazon S3. Env: PHOTOS_BUCKET, PHOTOS_BASE_URL (public read base), AWS_REGION + credentials.
+ *   --local  public/photos/ (development only, git-ignored).
  */
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -26,13 +30,14 @@ const FULL_EDGE = 3000;
 
 function parseArgs(argv) {
   const files = [];
-  const opts = { local: false };
+  const opts = { target: "" };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--local") opts.local = true;
+    if (a === "--local" || a === "--blob" || a === "--s3") opts.target = a.slice(2);
     else if (a.startsWith("--")) opts[a.slice(2)] = argv[++i];
     else files.push(a);
   }
+  if (!opts.target) opts.target = process.env.BLOB_READ_WRITE_TOKEN ? "blob" : "s3";
   return { files, opts };
 }
 
@@ -75,16 +80,29 @@ async function resize(buf, edge, format) {
 }
 
 async function store(key, body, contentType, opts, extra = {}) {
-  if (opts.local) {
+  if (opts.target === "local") {
     const dest = path.join(ROOT, "public/photos", key);
     await mkdir(path.dirname(dest), { recursive: true });
     await writeFile(dest, body);
     return `/photos/${key}`;
   }
+  if (opts.target === "blob") {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) throw new Error("BLOB_READ_WRITE_TOKEN must be set (vercel env pull .env.local, then node --env-file=.env.local …)");
+    const { put } = await import("@vercel/blob");
+    // Public blob URLs accept ?download=1 to force an attachment, so no Content-Disposition is needed here.
+    const res = await put(key, body, {
+      access: "public",
+      contentType,
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      cacheControlMaxAge: 31536000,
+    });
+    return res.url;
+  }
   const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
   const bucket = process.env.PHOTOS_BUCKET;
   const base = process.env.PHOTOS_BASE_URL;
-  if (!bucket || !base) throw new Error("PHOTOS_BUCKET and PHOTOS_BASE_URL must be set (or pass --local)");
+  if (!bucket || !base) throw new Error("PHOTOS_BUCKET and PHOTOS_BASE_URL must be set (or pass --blob / --local)");
   const s3 = new S3Client({});
   await s3.send(
     new PutObjectCommand({
@@ -135,6 +153,27 @@ async function add(files, opts) {
   await saveData(data);
 }
 
+async function migrate(opts) {
+  if (opts.target === "local") throw new Error("migrate needs --blob or --s3");
+  const data = await loadData();
+  let n = 0;
+  for (const p of data.photos) {
+    for (const kind of ["preview", "full"]) {
+      const src = p[kind].src;
+      if (!src.startsWith("/photos/")) continue;
+      const file = path.join(ROOT, "public", src);
+      const key = src.slice("/photos/".length);
+      const type = kind === "preview" ? "image/webp" : "image/jpeg";
+      const extra = kind === "full" ? { ContentDisposition: `attachment; filename="gidong-${p.id}.jpg"` } : {};
+      p[kind].src = await store(key, await readFile(file), type, opts, extra);
+      n++;
+    }
+    console.log(`${p.id}  ${p.preview.src}`);
+  }
+  await saveData(data);
+  console.log(`${n} files moved to ${opts.target}`);
+}
+
 async function list() {
   const data = await loadData();
   for (const p of data.photos) console.log(`${p.id}  ${p.season.padEnd(6)}  ${p.place}`);
@@ -153,10 +192,11 @@ const [cmd, ...rest] = process.argv.slice(2);
 const { files, opts } = parseArgs(rest);
 try {
   if (cmd === "add") await add(files, opts);
+  else if (cmd === "migrate") await migrate(opts);
   else if (cmd === "list") await list();
   else if (cmd === "remove") await remove(files[0]);
   else {
-    console.error("usage: photos.mjs add <file...> --place <caption> [--season <s>] [--alt <t>] [--credit <html>] [--local] | list | remove <id>");
+    console.error("usage: photos.mjs add <file...> --place <caption> [--season <s>] [--alt <t>] [--credit <html>] [--blob|--s3|--local] | migrate --blob|--s3 | list | remove <id>");
     process.exit(1);
   }
 } catch (e) {
