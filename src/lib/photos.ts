@@ -47,24 +47,33 @@ export function downloadHref(photo: Photo): string {
   return src.includes(".blob.vercel-storage.com") ? `${src}${src.includes("?") ? "&" : "?"}download=1` : src;
 }
 
-export type Filter = { season?: string; place?: string; tag?: string };
+export type FilterKind = "season" | "place" | "tag";
+export const FILTER_KINDS: FilterKind[] = ["season", "place", "tag"];
+
+/** One dimension at a time: /season/winter, /place/Jeju, /tag/snow. Static pages, no query string. */
+export type Filter = { kind: FilterKind; value: string } | null;
 
 export function apply(list: Photo[], filter: Filter): Photo[] {
-  return list.filter(
-    (p) =>
-      (!filter.season || p.season === filter.season) &&
-      (!filter.place || p.place === filter.place) &&
-      (!filter.tag || (p.tags ?? []).includes(filter.tag)),
+  if (!filter) return list;
+  const { kind, value } = filter;
+  return list.filter((p) =>
+    kind === "season" ? p.season === value : kind === "place" ? p.place === value : (p.tags ?? []).includes(value),
   );
 }
 
 export function filterHref(filter: Filter): string {
-  const q = new URLSearchParams();
-  if (filter.season) q.set("season", filter.season);
-  if (filter.place) q.set("place", filter.place);
-  if (filter.tag) q.set("tag", filter.tag);
-  const qs = q.toString();
-  return qs ? `/?${qs}` : "/";
+  return filter ? `/${filter.kind}/${encodeURIComponent(filter.value)}` : "/";
+}
+
+/** Reads a filter back from a pathname; null for anything that is not a filter page. */
+export function filterFromPath(pathname: string): Filter {
+  const m = pathname.match(/^\/(season|place|tag)\/([^/]+)$/);
+  if (!m) return null;
+  try {
+    return { kind: m[1] as FilterKind, value: decodeURIComponent(m[2]) };
+  } catch {
+    return null;
+  }
 }
 
 /** "a, b ,c" → ["a", "b", "c"], trimmed, lower-cased, deduplicated. */

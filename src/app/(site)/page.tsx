@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Stream } from "@/components/stream";
 import { getPhotos } from "@/lib/catalog";
 
@@ -7,9 +6,7 @@ export default async function PhotoPage() {
   return (
     <>
       <h1 className="visually-hidden">Photographs</h1>
-      <Suspense fallback={null}>
-        <Stream photos={photos} />
-      </Suspense>
+      <Stream photos={photos} />
     </>
   );
 }

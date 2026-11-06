@@ -62,7 +62,7 @@ async function Dashboard() {
           <ul className="admin-tagcloud">
             {tagCounts.map(([t, n]) => (
               <li key={t}>
-                <Link href={`/?tag=${encodeURIComponent(t)}`}>{t}</Link> <span className="num">{n}</span>
+                <Link href={`/tag/${encodeURIComponent(t)}`}>{t}</Link> <span className="num">{n}</span>
               </li>
             ))}
           </ul>

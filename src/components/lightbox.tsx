@@ -97,7 +97,7 @@ export function Lightbox({ photos, index, onChange, onClose }: Props) {
         />
         <figcaption>
           {photo.place && (
-            <button type="button" className="lightbox-tag" onClick={() => go(filterHref({ place: photo.place }))}>
+            <button type="button" className="lightbox-tag" onClick={() => go(filterHref({ kind: "place", value: photo.place }))}>
               {photo.place}
             </button>
           )}
@@ -105,7 +105,7 @@ export function Lightbox({ photos, index, onChange, onClose }: Props) {
             <ul className="lightbox-tags" aria-label="Tags">
               {tags.map((t) => (
                 <li key={t}>
-                  <button type="button" className="lightbox-tag" onClick={() => go(filterHref({ tag: t }))}>
+                  <button type="button" className="lightbox-tag" onClick={() => go(filterHref({ kind: "tag", value: t }))}>
                     {t}
                   </button>
                 </li>
