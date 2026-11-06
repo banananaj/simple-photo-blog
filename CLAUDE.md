@@ -8,7 +8,7 @@ Done and verified:
 - Next.js 16.4 (App Router, TS, no Tailwind) scaffold, `npm run build` passes, all visitor routes prerendered, `/admin` behind basic auth in `src/proxy.ts` (404 until `ADMIN_USER`/`ADMIN_PASSWORD` are set).
 - Pages: `/` (random stream + lightbox with place/tag links), `/about` (empty on purpose, owner writes it), `/grid-view` (unlisted seamless justified wall, no sidebar), `/admin` (dashboard), `/admin/upload` (browser-side WebP/JPEG conversion → tag editor → client upload to Blob → catalogue), `/admin/photos` (same tag editor over the catalogue: bulk/per-photo/marquee tagging, hide/show, delete).
 - Data: the catalogue lives on Blob (`src/lib/catalog.ts`, newest `catalog/photos-*.json`), read through `getPhotos()` (`use cache` + `cacheTag("catalog")`, hidden photos excluded) and invalidated with `revalidateTag("catalog", { expire: 0 })` from `/admin/api/catalog`. Photo states: visible / hidden / deleted. `src/content/photos.json` is only the seed.
-- Views: `src/lib/views.ts` counts full-size opens in a Redis REST store (Upstash/KV env vars); `/api/view` is the beacon. Without the store the dashboard says counting is off. Provisioning Upstash via `vercel integration add upstash/upstash-kv --name gidong-views` needs the owner to accept marketplace terms in the browser first.
+- Views: `src/lib/views.ts` counts full-size opens in a Redis REST store (Upstash/KV env vars); `/api/view` is the beacon. Upstash resource `gidong-views` is provisioned and connected (KV_REST_API_URL/TOKEN in all environments); counting is live on gidong.pics.
 - Hallmark build (app scope, theme Atelier, stamp in the first four lines of `src/app/globals.css`), `sloplint --render` clean (0 FAIL / 0 REFLEX / 0 WARN) at 320–1920. Log entry in `.hallmark/log.json`.
 - `scripts/photos.mjs` resizes (WebP preview 1600px, JPEG full 3000px), uploads to Vercel Blob (`--blob`, default when `BLOB_READ_WRITE_TOKEN` is set; run with `node --env-file=.env.local`), S3 (`--s3`) or `--local`; `migrate --blob` pushes local files up. 13 openly licensed stand-in photographs are on Blob and credited; the owner's own photographs replace them.
 - Impeccable installed (skill, 4 agents, design hook in `.claude/settings.local.json`); Hallmark skill in `.claude/skills/hallmark`.
@@ -16,7 +16,7 @@ Done and verified:
 Not done / open:
 - Hallmark finish review (fresh-context subagent per `references/gates.md` § 6) was started and did not complete. Run it again before calling the visitor page shipped, then record `finish-review: …` in the stamp.
 - No commit has been made yet; everything is staged. The owner decides when to commit/push. Never commit secrets (public repository).
-- Owner still to provide: About text, real photographs, Upstash terms acceptance (for view counts); S3 is off the table (owner decision 2026-11-06).
+- Owner still to provide: About text, real photographs. S3 is off the table (owner decision 2026-11-06).
 - Deployment: Vercel project `simple-photo-blog` (team banananajs-projects) linked in `.vercel/`, GitHub repo banananaj/simple-photo-blog connected (push to main = production), domains gidong.pics + www (308 to apex) attached, DNS at hosting.kr already points to Vercel. Blob store `gidong-photos` (public) linked; sample photos live there. Vercel token file: `~/.vercel-token`; CLI at `~/.npm-global/bin/vercel`, always pass `--token $(cat ~/.vercel-token) --scope banananajs-projects`.
 
 ## Conventions

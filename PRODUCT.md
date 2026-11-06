@@ -64,7 +64,6 @@ delegated: Next.js(App Router) + TypeScript, Vercel 배포, GitHub 공개 저장
 
 미정(결정 전 지어내지 않는다):
 - About 페이지 내용 — 운영자가 직접 작성
-- 조회수 저장소(Upstash Redis) 연결 — 마켓플레이스 약관 동의는 운영자가 브라우저에서
 - 장소 필터의 단위(국가/도시/지명) — 캡션에 적는 장소와 같은 값을 쓰는 것이 기본 가정
 
 용어:
