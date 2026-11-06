@@ -410,20 +410,25 @@
 /* Selection bar: appears at the foot while something is selected. */
 .tagedit-bar {
   position: fixed;
-  left: 50%;
+  left: var(--gutter);
+  right: var(--gutter);
   bottom: var(--space-lg);
-  transform: translateX(-50%);
+  width: fit-content;
+  margin-inline: auto;
   z-index: var(--z-sticky-nav);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
-  max-width: calc(100% - 2 * var(--gutter));
   padding: var(--space-sm) var(--space-md);
   border-radius: 2px;
   background: var(--color-card);
   box-shadow: var(--shadow-card);
+}
+
+.tagedit-bar button {
+  white-space: nowrap;
 }
 
 .tagedit-bar p {
