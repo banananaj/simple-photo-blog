@@ -1,7 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Suspense } from "react";
-import { Credits } from "@/components/credits";
-import { Sidebar } from "@/components/sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,15 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://api.fontshare.com/v2/css?f[]=sentient@300,400&display=swap" rel="stylesheet" />
         <script dangerouslySetInnerHTML={{ __html: jsFlag }} />
       </head>
-      <body>
-        <Suspense fallback={null}>
-          <Sidebar />
-        </Suspense>
-        <main id="main" className="main">
-          {children}
-          <Credits />
-        </main>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

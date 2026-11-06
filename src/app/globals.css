@@ -22,6 +22,10 @@ body {
   line-height: 1.6;
   font-weight: var(--serif-small);
   font-synthesis: none;
+}
+
+/* The visitor shell: sidebar beside the stream, capped and centred. */
+.site {
   display: grid;
   grid-template-columns: var(--side-width) minmax(0, 1fr);
   min-height: 100dvh;
@@ -317,6 +321,94 @@ h2 {
   cursor: not-allowed;
 }
 
+/* The letterbox: the place, then the tags, each a quiet link into the filtered stream. */
+.lightbox figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: var(--space-2xs) var(--space-md);
+}
+
+.lightbox-tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2xs) var(--space-sm);
+}
+
+.lightbox-tag {
+  min-height: 32px;
+  padding: 0 var(--space-2xs);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--color-rule);
+  text-underline-offset: 0.16em;
+  transition: color var(--dur-micro) var(--ease-out);
+}
+
+.lightbox-tag:hover {
+  color: var(--color-ink);
+  text-decoration-color: var(--color-accent);
+}
+
+.lightbox-tag:active {
+  color: var(--color-accent);
+}
+
+/* /grid-view: one seamless wall. Rows are justified in the component; cells carry
+   a percentage width, the image its own aspect ratio, so no measuring is needed. */
+.wall {
+  display: flex;
+  flex-direction: column;
+  transition: opacity var(--dur-short) var(--ease-out);
+}
+
+.js .wall:not([data-ready]) {
+  opacity: 0;
+}
+
+.wall-row {
+  display: flex;
+}
+
+.wall-cell {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: var(--color-paper-2);
+  cursor: zoom-in;
+  min-width: 0;
+}
+
+.wall-cell img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.wall-cell:focus-visible {
+  outline-offset: -3px;
+}
+
+.wall-cell:active img {
+  opacity: 0.92;
+}
+
+.wall-empty {
+  padding: var(--space-xl) var(--gutter);
+  color: var(--color-muted);
+  max-width: none;
+}
+
 /* About and admin: a short prose page. */
 .about {
   max-width: 60ch;
@@ -339,7 +431,7 @@ h2 {
     --side-width: 0px;
   }
 
-  body {
+  .site {
     grid-template-columns: minmax(0, 1fr);
   }
 

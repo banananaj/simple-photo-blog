@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Filter } from "@/components/filter";
 import { NavLink } from "@/components/nav-link";
-import { photos, places, seasons } from "@/lib/photos";
+import { getPhotos } from "@/lib/catalog";
+import { places, seasons, tags } from "@/lib/photos";
 
-export function Sidebar() {
+export async function Sidebar() {
+  const photos = await getPhotos();
   return (
     <header className="side">
       <p className="side-name">
@@ -15,7 +17,7 @@ export function Sidebar() {
         <NavLink href="/">Photo</NavLink>
         <NavLink href="/about">About</NavLink>
       </nav>
-      <Filter seasons={seasons(photos)} places={places(photos)} />
+      <Filter seasons={seasons(photos)} places={places(photos)} tags={tags(photos)} />
     </header>
   );
 }

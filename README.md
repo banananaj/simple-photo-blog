@@ -17,7 +17,11 @@ npm run dev                  # http://localhost:3000
 npm run build && npm start   # production
 ```
 
-## Add photographs
+## Admin
+
+`/admin` (basic auth, `ADMIN_USER` / `ADMIN_PASSWORD`): upload a folder (converted in the browser to a WebP preview and a 3000px JPEG, tagged in a confirm screen, then uploaded straight to Blob), manage photographs (tags, place, season, alt; hide/show; delete), and a dashboard (counts, tags, full-size opens when a Redis store is connected). `/grid-view` is an unlisted seamless wall of every visible photograph.
+
+## Add photographs from the command line
 
 ```bash
 # Vercel Blob (token from `vercel env pull .env.local`)

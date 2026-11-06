@@ -1,5 +1,3 @@
-import data from "@/content/photos.json";
-
 export type Season = "spring" | "summer" | "autumn" | "winter";
 
 export type ImageFile = { src: string; width: number; height: number };
@@ -13,22 +11,33 @@ export type Photo = {
   taken: string;
   alt: string;
   credit: string;
+  tags: string[];
+  /** Uploaded but not shown to visitors. */
+  hidden?: boolean;
+  uploadedAt?: string;
 };
+
+/** What visitors may see. */
+export function visible(list: Photo[]): Photo[] {
+  return list.filter((p) => !p.hidden);
+}
 
 export const SEASONS: Season[] = ["spring", "summer", "autumn", "winter"];
 
-export const photos: Photo[] = data.photos as Photo[];
-
-export function places(list: Photo[] = photos): string[] {
+export function places(list: Photo[]): string[] {
   return [...new Set(list.map((p) => p.place).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 }
 
-export function seasons(list: Photo[] = photos): Season[] {
+export function seasons(list: Photo[]): Season[] {
   const present = new Set(list.map((p) => p.season));
   return SEASONS.filter((s) => present.has(s));
 }
 
-export function credits(list: Photo[] = photos): string[] {
+export function tags(list: Photo[]): string[] {
+  return [...new Set(list.flatMap((p) => p.tags ?? []))].sort((a, b) => a.localeCompare(b));
+}
+
+export function credits(list: Photo[]): string[] {
   return [...new Set(list.map((p) => p.credit).filter(Boolean))];
 }
 
@@ -38,12 +47,29 @@ export function downloadHref(photo: Photo): string {
   return src.includes(".blob.vercel-storage.com") ? `${src}${src.includes("?") ? "&" : "?"}download=1` : src;
 }
 
-export type Filter = { season?: string; place?: string };
+export type Filter = { season?: string; place?: string; tag?: string };
 
 export function apply(list: Photo[], filter: Filter): Photo[] {
   return list.filter(
-    (p) => (!filter.season || p.season === filter.season) && (!filter.place || p.place === filter.place),
+    (p) =>
+      (!filter.season || p.season === filter.season) &&
+      (!filter.place || p.place === filter.place) &&
+      (!filter.tag || (p.tags ?? []).includes(filter.tag)),
   );
+}
+
+export function filterHref(filter: Filter): string {
+  const q = new URLSearchParams();
+  if (filter.season) q.set("season", filter.season);
+  if (filter.place) q.set("place", filter.place);
+  if (filter.tag) q.set("tag", filter.tag);
+  const qs = q.toString();
+  return qs ? `/?${qs}` : "/";
+}
+
+/** "a, b ,c" → ["a", "b", "c"], trimmed, lower-cased, deduplicated. */
+export function parseTags(text: string): string[] {
+  return [...new Set(text.split(/[,\n]/).map((t) => t.trim().toLowerCase()).filter(Boolean))];
 }
 
 /** Fisher–Yates on a copy. */

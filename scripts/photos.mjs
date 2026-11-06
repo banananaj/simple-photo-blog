@@ -147,6 +147,8 @@ async function add(files, opts) {
       taken: taken ? taken.toISOString().slice(0, 10) : "",
       alt: opts.alt || opts.place,
       credit: opts.credit || "",
+      tags: opts.tags ? opts.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean) : [],
+      hidden: false,
     });
     console.log(`added ${id}  ${opts.place}  ${preview.width}x${preview.height} / ${full.width}x${full.height}`);
   }

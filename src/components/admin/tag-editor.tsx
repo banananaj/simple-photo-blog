@@ -1,0 +1,234 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { parseTags, SEASONS } from "@/lib/photos";
+
+export type EditItem = {
+  id: string;
+  thumb: string;
+  width: number;
+  height: number;
+  place: string;
+  season: string;
+  tags: string[];
+  alt: string;
+  note?: string;
+  hidden?: boolean;
+};
+
+type Props = {
+  items: EditItem[];
+  onChange: (items: EditItem[]) => void;
+  selected: Set<string>;
+  onSelect: (ids: Set<string>) => void;
+};
+
+type Rect = { x: number; y: number; w: number; h: number };
+
+function intersects(a: DOMRect, b: Rect) {
+  return a.left < b.x + b.w && a.left + a.width > b.x && a.top < b.y + b.h && a.top + a.height > b.y;
+}
+
+/**
+ * The grid every tagging job shares: the upload confirm screen and the photo
+ * manager. Drag on the background to select a region (Shift adds to the
+ * selection, Alt removes), click a photograph to toggle it, then apply a place,
+ * season or tags to the selection or to everything. Each card also takes its
+ * own values.
+ */
+export function TagEditor({ items, onChange, selected, onSelect }: Props) {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number; y: number; mode: "replace" | "add" | "remove"; base: Set<string> } | null>(null);
+  const [marquee, setMarquee] = useState<Rect | null>(null);
+  const [bulk, setBulk] = useState({ place: "", season: "", tags: "" });
+
+  const update = (ids: Iterable<string>, patch: Partial<EditItem> | ((it: EditItem) => Partial<EditItem>)) => {
+    const set = new Set(ids);
+    onChange(items.map((it) => (set.has(it.id) ? { ...it, ...(typeof patch === "function" ? patch(it) : patch) } : it)));
+  };
+
+  const applyBulk = (ids: Iterable<string>) => {
+    const add = parseTags(bulk.tags);
+    update(ids, (it) => ({
+      place: bulk.place.trim() ? bulk.place.trim() : it.place,
+      season: bulk.season ? bulk.season : it.season,
+      tags: add.length ? [...new Set([...it.tags, ...add])] : it.tags,
+    }));
+  };
+
+  const removeTags = (ids: Iterable<string>) => {
+    const drop = new Set(parseTags(bulk.tags));
+    if (drop.size === 0) return;
+    update(ids, (it) => ({ tags: it.tags.filter((t) => !drop.has(t)) }));
+  };
+
+  // Marquee selection on the grid background.
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("input, select, button, textarea, label, a")) return;
+    const mode = e.shiftKey ? "add" : e.altKey ? "remove" : "replace";
+    drag.current = { x: e.clientX, y: e.clientY, mode, base: new Set(selected) };
+    setMarquee({ x: e.clientX, y: e.clientY, w: 0, h: 0 });
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current) return;
+    const { x, y } = drag.current;
+    setMarquee({ x: Math.min(x, e.clientX), y: Math.min(y, e.clientY), w: Math.abs(e.clientX - x), h: Math.abs(e.clientY - y) });
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || !marquee) return;
+    setMarquee(null);
+    const moved = marquee.w > 4 || marquee.h > 4;
+    if (!moved) {
+      const card = (e.target as HTMLElement).closest<HTMLElement>("[data-id]");
+      if (card) {
+        const id = card.dataset.id!;
+        const next = new Set(d.mode === "replace" && !e.ctrlKey && !e.metaKey ? [] : d.base);
+        if (d.base.has(id) && (e.ctrlKey || e.metaKey || d.mode === "add")) next.delete(id);
+        else if (d.mode === "remove") next.delete(id);
+        else next.add(id);
+        onSelect(next);
+      } else if (d.mode === "replace") {
+        onSelect(new Set());
+      }
+      return;
+    }
+    const hit = new Set<string>();
+    gridRef.current?.querySelectorAll<HTMLElement>("[data-id]").forEach((el) => {
+      if (intersects(el.getBoundingClientRect(), marquee)) hit.add(el.dataset.id!);
+    });
+    const next = d.mode === "replace" ? hit : new Set(d.base);
+    if (d.mode === "add") hit.forEach((id) => next.add(id));
+    if (d.mode === "remove") hit.forEach((id) => next.delete(id));
+    onSelect(next);
+  };
+
+  // Escape clears the selection; Ctrl/Cmd+A selects everything.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.closest("input, select, textarea")) return;
+      if (e.key === "Escape") onSelect(new Set());
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        onSelect(new Set(items.map((i) => i.id)));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [items, onSelect]);
+
+  const n = selected.size;
+
+  return (
+    <div className="tagedit">
+      <div className="tagedit-toolbar">
+        <label>
+          Place
+          <input type="text" value={bulk.place} onChange={(e) => setBulk({ ...bulk, place: e.target.value })} placeholder="leave empty to keep" />
+        </label>
+        <label>
+          Season
+          <select value={bulk.season} onChange={(e) => setBulk({ ...bulk, season: e.target.value })}>
+            <option value="">keep</option>
+            {SEASONS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="tagedit-grow">
+          Tags
+          <input type="text" value={bulk.tags} onChange={(e) => setBulk({ ...bulk, tags: e.target.value })} placeholder="comma separated" />
+        </label>
+        <div className="tagedit-actions">
+          <button type="button" onClick={() => applyBulk(selected)} disabled={n === 0}>
+            Apply to selected ({n})
+          </button>
+          <button type="button" onClick={() => applyBulk(items.map((i) => i.id))}>
+            Apply to all
+          </button>
+          <button type="button" onClick={() => removeTags(n ? selected : items.map((i) => i.id))} disabled={!bulk.tags.trim()}>
+            Remove tags {n ? "from selected" : "from all"}
+          </button>
+          <button type="button" onClick={() => onSelect(new Set())} disabled={n === 0}>
+            Clear selection
+          </button>
+        </div>
+        <p className="tagedit-hint">Drag on the background to select a region. Shift adds, Alt removes, click toggles, Esc clears.</p>
+      </div>
+
+      <div
+        ref={gridRef}
+        className="tagedit-grid"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => {
+          drag.current = null;
+          setMarquee(null);
+        }}
+      >
+        {items.map((it, i) => (
+          <div
+            key={it.id}
+            className="tagedit-card"
+            data-id={it.id}
+            data-selected={selected.has(it.id) ? "" : undefined}
+            data-hidden={it.hidden ? "" : undefined}
+          >
+            <img src={it.thumb} alt={it.alt} width={it.width} height={it.height} loading={i < 8 ? "eager" : "lazy"} draggable={false} />
+            {it.hidden && <p className="tagedit-hidden">Hidden from visitors</p>}
+            {it.note && <p className="tagedit-note">{it.note}</p>}
+            <label>
+              Place
+              <input type="text" value={it.place} onChange={(e) => update([it.id], { place: e.target.value })} />
+            </label>
+            <label>
+              Season
+              <select value={it.season} onChange={(e) => update([it.id], { season: e.target.value })}>
+                <option value="">none</option>
+                {SEASONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Tags
+              <input
+                type="text"
+                defaultValue={it.tags.join(", ")}
+                key={`${it.id}-${it.tags.join("|")}`}
+                onBlur={(e) => update([it.id], { tags: parseTags(e.target.value) })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                }}
+              />
+            </label>
+            <label>
+              Alt text
+              <input type="text" value={it.alt} onChange={(e) => update([it.id], { alt: e.target.value })} />
+            </label>
+          </div>
+        ))}
+      </div>
+
+      {marquee && (
+        <div
+          className="tagedit-marquee"
+          aria-hidden="true"
+          style={{ left: marquee.x, top: marquee.y, width: marquee.w, height: marquee.h }}
+        />
+      )}
+    </div>
+  );
+}

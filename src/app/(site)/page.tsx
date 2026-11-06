@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import { Stream } from "@/components/stream";
-import { photos } from "@/lib/photos";
+import { getPhotos } from "@/lib/catalog";
 
-export default function PhotoPage() {
+export default async function PhotoPage() {
+  const photos = await getPhotos();
   return (
     <>
       <h1 className="visually-hidden">Photographs</h1>

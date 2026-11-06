@@ -56,13 +56,14 @@ export function Stream({ photos }: Props) {
   const params = useSearchParams();
   const season = params.get("season") ?? "";
   const place = params.get("place") ?? "";
+  const tag = params.get("tag") ?? "";
   const seed = useSeed();
   const columns = useColumns();
 
   const list = useMemo(() => {
-    const filtered = apply(photos, { season, place });
+    const filtered = apply(photos, { season, place, tag });
     return seed === null ? filtered : shuffle(filtered, mulberry32(seed));
-  }, [photos, season, place, seed]);
+  }, [photos, season, place, tag, seed]);
   const dealt = useMemo(() => distribute(list, columns), [list, columns]);
 
   const [open, setOpen] = useState<number | null>(null);

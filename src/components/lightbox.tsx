@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { downloadHref, type Photo } from "@/lib/photos";
+import { useRouter } from "next/navigation";
+import { downloadHref, filterHref, type Photo } from "@/lib/photos";
 
 type Props = {
   photos: Photo[];
@@ -12,13 +13,27 @@ type Props = {
 
 const SWIPE = 48;
 
+function countView(id: string) {
+  try {
+    const body = new Blob([JSON.stringify({ id })], { type: "application/json" });
+    if (!navigator.sendBeacon("/api/view", body)) fetch("/api/view", { method: "POST", body, keepalive: true });
+  } catch {
+    // counting is a courtesy, never a failure
+  }
+}
+
 export function Lightbox({ photos, index, onChange, onClose }: Props) {
+  const router = useRouter();
   const photo = photos[index];
   const count = photos.length;
   const prev = () => onChange((index - 1 + count) % count);
   const next = () => onChange((index + 1) % count);
   const closeRef = useRef<HTMLButtonElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    countView(photo.id);
+  }, [photo.id]);
 
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
@@ -51,6 +66,14 @@ export function Lightbox({ photos, index, onChange, onClose }: Props) {
     if (Math.abs(dx) > SWIPE && Math.abs(dx) > Math.abs(dy)) (dx > 0 ? prev : next)();
   };
 
+  // A tag or place in the letterbox opens the filtered stream.
+  const go = (href: string) => {
+    onClose();
+    router.push(href);
+  };
+
+  const tags = photo.tags ?? [];
+
   return (
     <div
       className="lightbox"
@@ -72,7 +95,24 @@ export function Lightbox({ photos, index, onChange, onClose }: Props) {
           alt={photo.alt}
           decoding="async"
         />
-        <figcaption>{photo.place}</figcaption>
+        <figcaption>
+          {photo.place && (
+            <button type="button" className="lightbox-tag" onClick={() => go(filterHref({ place: photo.place }))}>
+              {photo.place}
+            </button>
+          )}
+          {tags.length > 0 && (
+            <ul className="lightbox-tags" aria-label="Tags">
+              {tags.map((t) => (
+                <li key={t}>
+                  <button type="button" className="lightbox-tag" onClick={() => go(filterHref({ tag: t }))}>
+                    {t}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </figcaption>
       </figure>
       <div className="lightbox-bar">
         <button type="button" ref={closeRef} onClick={onClose}>

@@ -2,57 +2,45 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { filterHref } from "@/lib/photos";
 
-type Props = { seasons: string[]; places: string[] };
+type Props = { seasons: string[]; places: string[]; tags: string[] };
 
 // The filter stays folded; a reader who wants it opens it. Its state lives in the
-// URL (?season=…&place=…) so a filtered view can be shared and reloaded.
-export function Filter({ seasons, places }: Props) {
+// URL (?season=…&place=…&tag=…) so a filtered view can be shared and reloaded.
+export function Filter({ seasons, places, tags }: Props) {
   const params = useSearchParams();
   const pathname = usePathname();
-  const season = params.get("season") ?? "";
-  const place = params.get("place") ?? "";
-  const active = season || place;
+  const current = { season: params.get("season") ?? "", place: params.get("place") ?? "", tag: params.get("tag") ?? "" };
+  const active = current.season || current.place || current.tag;
   if (pathname !== "/") return null;
 
-  const href = (next: { season?: string; place?: string }) => {
-    const q = new URLSearchParams();
-    const s = next.season ?? season;
-    const p = next.place ?? place;
-    if (s) q.set("season", s);
-    if (p) q.set("place", p);
-    const qs = q.toString();
-    return qs ? `/?${qs}` : "/";
-  };
+  const group = (label: string, key: keyof typeof current, values: string[]) =>
+    values.length > 0 && (
+      <div className="filter-group">
+        <p className="filter-head">{label}</p>
+        <ul>
+          {values.map((v) => (
+            <li key={v}>
+              <Link
+                href={filterHref({ ...current, [key]: v === current[key] ? "" : v })}
+                aria-current={v === current[key] ? "true" : undefined}
+              >
+                {v}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
 
   return (
     <details className="filter" open={Boolean(active) || undefined}>
       <summary>{active ? "Filtered" : "Filter"}</summary>
       <div className="filter-groups">
-        <div className="filter-group">
-          <p className="filter-head">Season</p>
-          <ul>
-            {seasons.map((s) => (
-              <li key={s}>
-                <Link href={href({ season: s === season ? "" : s })} aria-current={s === season ? "true" : undefined}>
-                  {s}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="filter-group">
-          <p className="filter-head">Place</p>
-          <ul>
-            {places.map((p) => (
-              <li key={p}>
-                <Link href={href({ place: p === place ? "" : p })} aria-current={p === place ? "true" : undefined}>
-                  {p}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {group("Season", "season", seasons)}
+        {group("Place", "place", places)}
+        {group("Tag", "tag", tags)}
         {active && (
           <p className="filter-clear">
             <Link href="/">Show everything</Link>
