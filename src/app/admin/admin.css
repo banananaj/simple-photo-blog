@@ -311,6 +311,104 @@
   outline-offset: 2px;
 }
 
+/* Tag input: chips in a box, a completion list beneath. */
+.tagin {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs);
+  min-height: 36px;
+  padding: var(--space-3xs) var(--space-xs);
+  border: var(--rule-hair) solid var(--color-muted);
+  border-radius: 4px;
+  background: var(--color-card);
+  cursor: text;
+}
+
+.tagin:focus-within {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.tagin-compact {
+  min-height: 30px;
+  padding: var(--space-3xs) var(--space-2xs);
+}
+
+.admin .tagin input {
+  flex: 1 1 6rem;
+  min-width: 4rem;
+  min-height: 26px;
+  border: 0;
+  padding: 0 var(--space-2xs);
+  background: transparent;
+  width: auto;
+}
+
+.admin .tagin input:focus-visible {
+  outline: none;
+}
+
+.tagin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  padding: 0 var(--space-2xs) 0 var(--space-xs);
+  min-height: 24px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--color-accent) 14%, var(--color-card));
+  color: var(--color-ink);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin .tagin-chip button {
+  min-height: 20px;
+  width: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-ink-2);
+  font-size: var(--text-sm);
+  line-height: 1;
+}
+
+.admin .tagin-chip button:hover {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.tagin-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: var(--z-dropdown);
+  margin: var(--space-3xs) 0 0;
+  padding: var(--space-3xs) 0;
+  list-style: none;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: 4px;
+  background: var(--color-card);
+  box-shadow: var(--shadow-card);
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.tagin-list li {
+  padding: var(--space-2xs) var(--space-xs);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.tagin-list li[data-active] {
+  background: color-mix(in oklab, var(--color-accent) 14%, var(--color-card));
+  color: var(--color-ink);
+}
+
 /* Tag editor */
 .tagedit {
   display: flex;

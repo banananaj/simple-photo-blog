@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { parseTags, RATINGS, SEASONS } from "@/lib/photos";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { TagInput } from "@/components/admin/tag-input";
+import { RATINGS, SEASONS } from "@/lib/photos";
 
 export type EditItem = {
   id: string;
@@ -32,6 +33,8 @@ type Props = {
   onToggleHidden?: (id: string, hidden: boolean) => void;
   /** Extra buttons in the selection bar (hide, show, delete…). */
   actions?: SelectionAction[];
+  /** Known tags, offered as completions. */
+  knownTags?: string[];
 };
 
 type Rect = { x: number; y: number; w: number; h: number };
@@ -58,7 +61,7 @@ function EyeIcon({ off }: { off: boolean }) {
  * own values and has an eye to hide or show it on the spot. Selection-wide
  * actions live in a bar that appears only while something is selected.
  */
-export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden, actions = [] }: Props) {
+export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden, actions = [], knownTags = [] }: Props) {
   const gridRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{
     x: number;
@@ -69,7 +72,12 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
     additive: boolean;
   } | null>(null);
   const [marquee, setMarquee] = useState<Rect | null>(null);
-  const [bulk, setBulk] = useState({ place: "", season: "", tags: "", rating: "" });
+  const [bulk, setBulk] = useState<{ place: string; season: string; tags: string[]; rating: string }>({ place: "", season: "", tags: [], rating: "" });
+  // Completions: everything known plus whatever this batch already carries.
+  const suggestions = useMemo(
+    () => [...new Set([...knownTags, ...items.flatMap((i) => i.tags)])].sort((a, b) => a.localeCompare(b)),
+    [knownTags, items],
+  );
 
   const update = (ids: Iterable<string>, patch: Partial<EditItem> | ((it: EditItem) => Partial<EditItem>)) => {
     const set = new Set(ids);
@@ -77,7 +85,7 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
   };
 
   const applyBulk = (ids: Iterable<string>) => {
-    const add = parseTags(bulk.tags);
+    const add = bulk.tags;
     update(ids, (it) => ({
       place: bulk.place.trim() ? bulk.place.trim() : it.place,
       season: bulk.season ? bulk.season : it.season,
@@ -87,7 +95,7 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
   };
 
   const removeTags = (ids: Iterable<string>) => {
-    const drop = new Set(parseTags(bulk.tags));
+    const drop = new Set(bulk.tags);
     if (drop.size === 0) return;
     update(ids, (it) => ({ tags: it.tags.filter((t) => !drop.has(t)) }));
   };
@@ -195,13 +203,13 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
         </label>
         <label className="tagedit-grow">
           Tags
-          <input type="text" value={bulk.tags} onChange={(e) => setBulk({ ...bulk, tags: e.target.value })} placeholder="comma separated" />
+          <TagInput value={bulk.tags} onChange={(tags) => setBulk({ ...bulk, tags })} suggestions={suggestions} placeholder="type a tag, press Space" />
         </label>
         <div className="tagedit-actions">
           <button type="button" onClick={() => applyBulk(items.map((i) => i.id))}>
             Apply to all
           </button>
-          <button type="button" onClick={() => removeTags(items.map((i) => i.id))} disabled={!bulk.tags.trim()}>
+          <button type="button" onClick={() => removeTags(items.map((i) => i.id))} disabled={bulk.tags.length === 0}>
             Remove tags from all
           </button>
         </div>
@@ -261,15 +269,7 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
             </label>
             <label>
               Tags
-              <input
-                type="text"
-                defaultValue={it.tags.join(", ")}
-                key={`${it.id}-${it.tags.join("|")}`}
-                onBlur={(e) => update([it.id], { tags: parseTags(e.target.value) })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                }}
-              />
+              <TagInput compact value={it.tags} onChange={(tags) => update([it.id], { tags })} suggestions={suggestions} />
             </label>
             <label>
               Rating
@@ -295,7 +295,7 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
           <button type="button" onClick={() => applyBulk(ids)}>
             Apply fields
           </button>
-          <button type="button" onClick={() => removeTags(ids)} disabled={!bulk.tags.trim()}>
+          <button type="button" onClick={() => removeTags(ids)} disabled={bulk.tags.length === 0}>
             Remove tags
           </button>
           {actions.map((a) => (

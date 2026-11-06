@@ -18,12 +18,18 @@ export function Uploader() {
   const [progress, setProgress] = useState({ done: 0, total: 0, current: "" });
   const [errors, setErrors] = useState<string[]>([]);
   const [result, setResult] = useState<{ added: number; total: number } | null>(null);
+  const [knownTags, setKnownTags] = useState<string[]>([]);
 
   const onFiles = async (list: FileList | null) => {
     if (!list || list.length === 0) return;
     const files = [...list].filter((f) => f.type.startsWith("image/")).sort((a, b) => a.name.localeCompare(b.name));
     setStage("preparing");
     setErrors([]);
+    // Known tags for completions, fetched while the files are being prepared.
+    fetch("/admin/api/catalog", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { photos: Photo[] }) => setKnownTags([...new Set(d.photos.flatMap((p) => p.tags ?? []))].sort()))
+      .catch(() => {});
     setProgress({ done: 0, total: files.length, current: "" });
     const out: Draft[] = [];
     const errs: string[] = [];
@@ -224,6 +230,7 @@ export function Uploader() {
         onChange={onChange}
         selected={selected}
         onSelect={setSelected}
+        knownTags={knownTags}
         onToggleHidden={(id, hidden) => onChange(drafts.map((d) => (d.id === id ? { ...d, hidden } : d)))}
         actions={[
           { label: "Hide", onClick: (ids) => onChange(drafts.map((d) => (ids.includes(d.id) ? { ...d, hidden: true } : d))) },

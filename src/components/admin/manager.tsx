@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TagEditor, type EditItem } from "@/components/admin/tag-editor";
-import { ratingOf, type Photo } from "@/lib/photos";
+import { ratingOf, tags as allTags, type Photo } from "@/lib/photos";
 
 type Row = EditItem & { photo: Photo };
 
@@ -158,6 +158,7 @@ export function Manager() {
         onChange={onChange}
         selected={selected}
         onSelect={setSelected}
+        knownTags={allTags(rows.map((r) => r.photo))}
         onToggleHidden={(id, hidden) => setHidden(hidden, [id])}
         actions={[
           { label: "Hide", onClick: (ids) => setHidden(true, ids) },
