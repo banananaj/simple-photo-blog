@@ -17,7 +17,7 @@ export function proxy(request: NextRequest) {
   }
   return new NextResponse("Authentication required.", {
     status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="gidong admin", charset="UTF-8"' },
+    headers: { "WWW-Authenticate": 'Basic realm="admin", charset="UTF-8"' },
   });
 }
 

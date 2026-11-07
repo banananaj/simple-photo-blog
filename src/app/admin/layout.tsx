@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NavLink } from "@/components/nav-link";
+import { site } from "@/lib/site";
 import "./admin.css";
 
 export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s — admin — gidong" },
+  title: { default: "Admin", template: `%s — admin — ${site.name}` },
   robots: { index: false, follow: false },
 };
 
@@ -14,7 +15,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="admin">
       <header className="admin-bar">
         <p className="admin-name">
-          <Link href="/admin">gidong admin</Link>
+          <Link href="/admin">{site.name} admin</Link>
         </p>
         <nav className="admin-nav" aria-label="Admin">
           <NavLink href="/admin">Dashboard</NavLink>

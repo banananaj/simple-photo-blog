@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { downloadHref, filterHref, type Photo } from "@/lib/photos";
+import { site } from "@/lib/site";
 
 type Props = {
   photos: Photo[];
@@ -125,7 +126,7 @@ export function Lightbox({ photos, index, onChange, onClose, onNavigate }: Props
             </button>
           </>
         )}
-        <a href={downloadHref(photo)} download={`gidong-${photo.id}.jpg`}>
+        <a href={downloadHref(photo)} download={`${site.slug}-${photo.id}.jpg`}>
           Download
         </a>
       </div>

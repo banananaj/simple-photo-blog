@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { site } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "gidong", template: "%s — gidong" },
-  description: "Photographs by gidong, shown in no particular order.",
-  metadataBase: new URL("https://gidong.pics"),
+  title: { default: site.name, template: `%s — ${site.name}` },
+  description: site.description,
+  ...(site.url ? { metadataBase: new URL(site.url) } : {}),
 };
 
 export const viewport: Viewport = {

@@ -3,14 +3,15 @@ import { Filter } from "@/components/filter";
 import { NavLink } from "@/components/nav-link";
 import { getPhotos } from "@/lib/catalog";
 import { places, seasons, tags } from "@/lib/photos";
+import { site } from "@/lib/site";
 
 export async function Sidebar() {
   const photos = await getPhotos();
   return (
     <header className="side">
       <p className="side-name">
-        <Link href="/" aria-label="gidong, home">
-          gidong
+        <Link href="/" aria-label={`${site.name}, home`}>
+          {site.name}
         </Link>
       </p>
       <nav className="side-nav" aria-label="Site">

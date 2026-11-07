@@ -25,6 +25,8 @@ import exifr from "exifr";
 
 const ROOT = path.resolve(new URL(".", import.meta.url).pathname, "..");
 const DATA = path.join(ROOT, "src/content/photos.json");
+// Download file names start with the site name (NEXT_PUBLIC_SITE_NAME), as in the browser.
+const SLUG = (process.env.NEXT_PUBLIC_SITE_NAME || "photo").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "photo";
 const PREVIEW_EDGE = 1600;
 const FULL_EDGE = 3000;
 
@@ -138,7 +140,7 @@ async function add(files, opts) {
     const full = await resize(buf, FULL_EDGE, "jpeg");
     const previewSrc = await store(`${id}/preview.webp`, preview.data, "image/webp", opts);
     const fullSrc = await store(`${id}/full.jpg`, full.data, "image/jpeg", opts, {
-      ContentDisposition: `attachment; filename="gidong-${id}.jpg"`,
+      ContentDisposition: `attachment; filename="${SLUG}-${id}.jpg"`,
     });
     data.photos.push({
       id,
@@ -169,7 +171,7 @@ async function migrate(opts) {
       const file = path.join(ROOT, "public", src);
       const key = src.slice("/photos/".length);
       const type = kind === "preview" ? "image/webp" : "image/jpeg";
-      const extra = kind === "full" ? { ContentDisposition: `attachment; filename="gidong-${p.id}.jpg"` } : {};
+      const extra = kind === "full" ? { ContentDisposition: `attachment; filename="${SLUG}-${p.id}.jpg"` } : {};
       p[kind].src = await store(key, await readFile(file), type, opts, extra);
       n++;
     }

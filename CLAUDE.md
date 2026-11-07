@@ -21,6 +21,8 @@ Not done / open:
 
 ## Conventions
 
+- The code is a template: the site name, public URL and description come from `NEXT_PUBLIC_SITE_NAME`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SITE_DESCRIPTION` (`src/lib/site.ts`); never hard-code "gidong" in source. The owner's values are set on the Vercel project (all environments) and in `.env.local`. `src/content/photos.json` is an empty seed; the owner's catalogue lives on Blob. README.md is the public hosting guide.
+
 - Every colour and font goes through a token in `src/app/tokens.css` (Hallmark Floor). Spacing uses `--space-*`. No literal colours in component CSS.
 - Photographs are plain `<img>` with width/height (no `next/image`): resizing happens at upload time to stay inside the Vercel Hobby image quota. `@next/next/no-img-element` is off on purpose.
 - Order: `weightedOrder()` in `src/lib/photos.ts`: per visit each photo gets `random() × rating²` and the list sorts on it (rating from XMP at upload, 1 when absent, editable in admin). The browser draws one seed per page load (`useSyncExternalStore`, `src/components/stream.tsx`); the server renders stored order; `.js .stream:not([data-ready])` hides nothing from no-script readers.
