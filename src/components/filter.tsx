@@ -14,10 +14,11 @@ export function Filter({ seasons, places, tags }: Props) {
   const current = filterFromPath(pathname);
   if (pathname !== "/" && !current) return null;
 
+  // Each group folds on its own; the group holding the current filter starts open.
   const group = (label: string, kind: FilterKind, values: string[]) =>
     values.length > 0 && (
-      <div className="filter-group">
-        <p className="filter-head">{label}</p>
+      <details className="filter-group" open={!current || current.kind === kind ? true : undefined}>
+        <summary className="filter-head">{label}</summary>
         <ul>
           {values.map((v) => {
             const on = current?.kind === kind && current.value === v;
@@ -30,7 +31,7 @@ export function Filter({ seasons, places, tags }: Props) {
             );
           })}
         </ul>
-      </div>
+      </details>
     );
 
   return (
@@ -38,8 +39,8 @@ export function Filter({ seasons, places, tags }: Props) {
       <summary>{current ? "Filtered" : "Filter"}</summary>
       <div className="filter-groups">
         {group("Season", "season", seasons)}
-        {group("Place", "place", places)}
         {group("Tag", "tag", tags)}
+        {group("Place", "place", places)}
         {current && (
           <p className="filter-clear">
             <Link href="/">Show everything</Link>

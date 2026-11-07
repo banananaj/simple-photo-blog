@@ -685,7 +685,7 @@
 
 .admin .tagedit-copy:disabled {
   opacity: 0.4;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 /* Folder chooser: which folders of a pick to stage. */

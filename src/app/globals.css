@@ -52,6 +52,12 @@ h2 {
   gap: var(--space-xl);
   padding: var(--space-2xl) var(--space-xl);
   overflow-y: auto;
+  /* It still scrolls (wheel, touch, keyboard); the bar itself stays out of sight. */
+  scrollbar-width: none;
+}
+
+.side::-webkit-scrollbar {
+  display: none;
 }
 
 .side-name {
@@ -156,9 +162,26 @@ h2 {
   padding-top: var(--space-xs);
 }
 
+/* Group heads fold their list; a small mark says which way. */
 .filter-head {
   color: var(--color-ink);
   max-width: none;
+  min-height: 32px;
+}
+
+.filter-head::before {
+  content: "+";
+  display: inline-block;
+  width: 1em;
+  color: var(--color-muted);
+}
+
+.filter-group[open] > .filter-head::before {
+  content: "−";
+}
+
+.filter-group ul {
+  padding-left: 1em;
 }
 
 .filter ul,
