@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { downloadHref, filterHref, type Photo } from "@/lib/photos";
 
 type Props = {
@@ -9,6 +8,8 @@ type Props = {
   index: number;
   onChange: (index: number) => void;
   onClose: () => void;
+  /** Leave for another page (a place or tag filter); the owner settles history. */
+  onNavigate: (href: string) => void;
 };
 
 const SWIPE = 48;
@@ -22,8 +23,7 @@ function countView(id: string) {
   }
 }
 
-export function Lightbox({ photos, index, onChange, onClose }: Props) {
-  const router = useRouter();
+export function Lightbox({ photos, index, onChange, onClose, onNavigate }: Props) {
   const photo = photos[index];
   const count = photos.length;
   const prev = () => onChange((index - 1 + count) % count);
@@ -67,10 +67,7 @@ export function Lightbox({ photos, index, onChange, onClose }: Props) {
   };
 
   // A tag or place in the letterbox opens the filtered stream.
-  const go = (href: string) => {
-    onClose();
-    router.push(href);
-  };
+  const go = (href: string) => onNavigate(href);
 
   const tags = photo.tags ?? [];
 

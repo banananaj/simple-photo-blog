@@ -1,21 +1,56 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { upload } from "@vercel/blob/client";
 import { TagEditor, type EditItem } from "@/components/admin/tag-editor";
-import { collectDropped, dragHasFiles } from "@/lib/dropped";
+import { collectDropped, dragHasFiles, locateInput, type Located } from "@/lib/dropped";
 import { prepare, readMeta, seasonOf, type Meta, type Prepared } from "@/lib/image-client";
-import type { Photo } from "@/lib/photos";
+import { RATINGS, type Photo } from "@/lib/photos";
 
 type Stage = "edit" | "uploading" | "done";
 
 type Draft = EditItem & { prepared: Prepared; taken: string };
 
-/** A folder (picked or dropped) stages only the files that carry a star rating; loose files stage as they are. */
+/** A folder (picked or dropped) stages only the files rated at or above the threshold; loose files stage as they are. */
 type Pick = { files: File[]; ratedOnly: boolean };
 
+/** A folder pick waiting for the owner to choose which of its folders to take. */
+type Chooser = { groups: { dir: string; files: File[] }[]; checked: Set<string> };
+
 const isImage = (f: File) => f.type.startsWith("image/") || /\.(jpe?g|png|webp|tiff?|heic|avif)$/i.test(f.name);
+
+// The rating threshold for folders, remembered in this browser. Read through
+// useSyncExternalStore so the server render (1) and the first client render agree.
+const MIN_KEY = "uploader.minRating";
+const minListeners = new Set<() => void>();
+function readMin(): number {
+  const n = Number(localStorage.getItem(MIN_KEY));
+  return n >= 1 && n <= 5 ? n : 1;
+}
+function writeMin(n: number) {
+  localStorage.setItem(MIN_KEY, String(n));
+  minListeners.forEach((l) => l());
+}
+function subscribeMin(l: () => void) {
+  minListeners.add(l);
+  window.addEventListener("storage", l);
+  return () => {
+    minListeners.delete(l);
+    window.removeEventListener("storage", l);
+  };
+}
+const useMinRating = () => useSyncExternalStore(subscribeMin, readMin, () => 1);
+
+/** Group located files by folder, folders in path order; files without a folder go under "". */
+function groupByDir(located: Located[]): { dir: string; files: File[] }[] {
+  const map = new Map<string, File[]>();
+  for (const { file, dir } of located) {
+    if (!isImage(file)) continue;
+    map.set(dir, [...(map.get(dir) ?? []), file]);
+  }
+  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([dir, files]) => ({ dir, files }));
+}
 
 /**
  * Pick a folder or files, or drop them on the page, as often as you like: each
@@ -33,6 +68,8 @@ export function Uploader() {
   const [result, setResult] = useState<{ added: number; total: number } | null>(null);
   const [knownTags, setKnownTags] = useState<string[]>([]);
   const [over, setOver] = useState(false);
+  const [chooser, setChooser] = useState<Chooser | null>(null);
+  const minRating = useMinRating();
   // Ids already in the list, kept in step synchronously so a duplicate in the same pick is caught.
   const ids = useRef<Set<string>>(new Set());
   const dragDepth = useRef(0);
@@ -50,6 +87,7 @@ export function Uploader() {
     const info: string[] = [];
     let skipped = 0;
     let unrated = 0;
+    let below = 0;
 
     // Read metadata first, so a folder's unrated files are dropped before the expensive conversion.
     setPreparing({ done: 0, total: all.length, current: "" });
@@ -62,6 +100,10 @@ export function Uploader() {
         const meta = await readMeta(file);
         if (pick.ratedOnly && meta.rating === null) {
           unrated++;
+          continue;
+        }
+        if (pick.ratedOnly && meta.rating !== null && meta.rating < minRating) {
+          below++;
           continue;
         }
         queue.push({ file, meta });
@@ -104,8 +146,9 @@ export function Uploader() {
       }
     }
     if (unrated) info.push(`${unrated} file${unrated === 1 ? "" : "s"} in the folder without a star rating, left out`);
+    if (below) info.push(`${below} file${below === 1 ? "" : "s"} rated below ${minRating}, left out`);
     if (skipped) info.push(`${skipped} already in the list, skipped`);
-    if (queue.length === 0 && unrated) info.push("Nothing to stage: none of the folder's files carries a rating");
+    if (queue.length === 0 && (unrated || below)) info.push("Nothing to stage from the folder at this rating");
     setErrors(errs);
     setNotes(info);
     setPreparing(null);
@@ -115,16 +158,34 @@ export function Uploader() {
     if (list && list.length) addPicks([{ files: [...list], ratedOnly }]);
   };
 
+  // A folder pick with several folders inside shows a chooser first; one folder stages at once.
+  const stageFolders = (located: Located[], loose: File[] = []) => {
+    const groups = groupByDir(located);
+    if (groups.length > 1) {
+      setChooser({ groups, checked: new Set(groups.map((g) => g.dir)) });
+      if (loose.length) addPicks([{ files: loose, ratedOnly: false }]);
+      return;
+    }
+    addPicks([
+      { files: groups.flatMap((g) => g.files), ratedOnly: true },
+      { files: loose, ratedOnly: false },
+    ]);
+  };
+
+  const confirmChooser = () => {
+    if (!chooser) return;
+    const files = chooser.groups.filter((g) => chooser.checked.has(g.dir)).flatMap((g) => g.files);
+    setChooser(null);
+    addPicks([{ files, ratedOnly: true }]);
+  };
+
   const onDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     dragDepth.current = 0;
     setOver(false);
     if (preparing || !dragHasFiles(e.dataTransfer)) return;
     const { loose, fromFolders } = await collectDropped(e.dataTransfer);
-    addPicks([
-      { files: fromFolders, ratedOnly: true },
-      { files: loose, ratedOnly: false },
-    ]);
+    stageFolders(fromFolders, loose);
   };
   const onDragEnter = (e: React.DragEvent) => {
     if (!dragHasFiles(e.dataTransfer)) return;
@@ -234,10 +295,20 @@ export function Uploader() {
           webkitdirectory=""
           disabled={Boolean(preparing)}
           onChange={(e) => {
-            onInput(e.target.files, true);
+            if (e.target.files?.length) stageFolders(locateInput(e.target.files));
             e.target.value = "";
           }}
         />
+      </label>
+      <label className="uploader-min">
+        From folders, rated
+        <select value={minRating} onChange={(e) => writeMin(Number(e.target.value))} disabled={Boolean(preparing)}>
+          {[...RATINGS].reverse().map((r) => (
+            <option key={r} value={r}>
+              {r === 1 ? "1 and up (any rating)" : `${r} and up`}
+            </option>
+          ))}
+        </select>
       </label>
       <label className="uploader-drop">
         {drafts.length ? "Add files" : "Choose files"}
@@ -315,8 +386,9 @@ export function Uploader() {
       {drafts.length === 0 && !preparing && (
         <p>
           Pick a folder or files, or drag them anywhere onto this page, as many times as you like. From a folder only
-          the photographs with a star rating are taken (XnView MP, Lightroom and Bridge write it into the file); files
-          picked one by one are taken as they are. Each photograph is converted in this browser to a WebP preview and a
+          the photographs rated at or above the chosen stars are taken (XnView MP, Lightroom and Bridge write the
+          rating into the file); a pick with several folders inside asks which to take first. Files picked one by one
+          are taken as they are. Each photograph is converted in this browser to a WebP preview and a
           3000px JPEG and added to the list below. Nothing is uploaded until you press Upload.
         </p>
       )}
@@ -345,6 +417,47 @@ export function Uploader() {
         )}
       </div>
       {preparing && <progress value={preparing.done} max={preparing.total} />}
+      {chooser && (
+        <div className="uploader-folders" role="group" aria-label="Folders in this pick">
+          <p>
+            {chooser.groups.length} folders in this pick. Take which ones? (only files rated {minRating} and up are
+            staged)
+          </p>
+          <ul>
+            {chooser.groups.map((g) => (
+              <li key={g.dir}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={chooser.checked.has(g.dir)}
+                    onChange={(e) => {
+                      const checked = new Set(chooser.checked);
+                      if (e.target.checked) checked.add(g.dir);
+                      else checked.delete(g.dir);
+                      setChooser({ ...chooser, checked });
+                    }}
+                  />
+                  {g.dir || "(top level)"} <span className="num">{g.files.length}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          <div className="admin-actions">
+            <button type="button" className="admin-primary" onClick={confirmChooser} disabled={chooser.checked.size === 0}>
+              Stage {chooser.checked.size} folder{chooser.checked.size === 1 ? "" : "s"}
+            </button>
+            <button type="button" onClick={() => setChooser({ ...chooser, checked: new Set(chooser.groups.map((g) => g.dir)) })}>
+              All
+            </button>
+            <button type="button" onClick={() => setChooser({ ...chooser, checked: new Set() })}>
+              None
+            </button>
+            <button type="button" onClick={() => setChooser(null)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       {noteList}
       {errorList}
       {drafts.length > 0 && (

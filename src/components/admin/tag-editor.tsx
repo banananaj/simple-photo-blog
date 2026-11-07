@@ -43,6 +43,11 @@ function intersects(a: DOMRect, b: Rect) {
   return a.left < b.x + b.w && a.left + a.width > b.x && a.top < b.y + b.h && a.top + a.height > b.y;
 }
 
+// Tags go to the clipboard as "a, b, c"; the tag field splits a paste on commas and spaces.
+function copyTags(tags: string[]) {
+  navigator.clipboard?.writeText(tags.join(", ")).catch(() => {});
+}
+
 function EyeIcon({ off }: { off: boolean }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -243,6 +248,8 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
                   type="button"
                   className="tagedit-eye"
                   onClick={() => onToggleHidden(it.id, !it.hidden)}
+                  // Out of the tab order: tabbing through the fields would otherwise jump up to the picture.
+                  tabIndex={-1}
                   aria-pressed={Boolean(it.hidden)}
                   aria-label={it.hidden ? "Hidden from visitors. Show it" : "Shown to visitors. Hide it"}
                   title={it.hidden ? "Show" : "Hide"}
@@ -269,7 +276,19 @@ export function TagEditor({ items, onChange, selected, onSelect, onToggleHidden,
               </select>
             </label>
             <div className="tagedit-field">
-              <label htmlFor={`tags-${it.id}`}>Tags</label>
+              <div className="tagedit-fieldhead">
+                <label htmlFor={`tags-${it.id}`}>Tags</label>
+                <button
+                  type="button"
+                  className="tagedit-copy"
+                  tabIndex={-1}
+                  disabled={it.tags.length === 0}
+                  onClick={() => copyTags(it.tags)}
+                  title="Copy these tags; paste them into another Tags field"
+                >
+                  Copy
+                </button>
+              </div>
               <TagInput id={`tags-${it.id}`} compact value={it.tags} onChange={(tags) => update([it.id], { tags })} suggestions={suggestions} />
             </div>
             <label>

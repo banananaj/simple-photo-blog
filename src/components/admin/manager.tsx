@@ -27,6 +27,16 @@ function sameTags(a: string[], b: string[]) {
   return a.length === b.length && a.every((t, i) => t === b[i]);
 }
 
+function isDirty(r: Row) {
+  return (
+    r.place !== r.photo.place ||
+    r.season !== r.photo.season ||
+    r.alt !== r.photo.alt ||
+    r.rating !== ratingOf(r.photo) ||
+    !sameTags(r.tags, r.photo.tags ?? [])
+  );
+}
+
 // Every photograph in the catalogue, editable the same way as a fresh upload.
 export function Manager() {
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -35,10 +45,19 @@ export function Manager() {
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
 
+  // A reload (after a hide, a delete, or the button) never throws away what was
+  // typed into other rows: an unsaved edit rides on top of the fresh record.
   const load = useCallback(async () => {
     const res = await fetch("/admin/api/catalog", { cache: "no-store" });
     const data = (await res.json()) as { photos: Photo[] };
-    setRows(data.photos.map(toRow));
+    setRows((prev) => {
+      const edited = new Map((prev ?? []).filter(isDirty).map((r) => [r.id, r]));
+      return data.photos.map((p) => {
+        const fresh = toRow(p);
+        const old = edited.get(p.id);
+        return old ? { ...fresh, place: old.place, season: old.season, tags: old.tags, alt: old.alt, rating: old.rating } : fresh;
+      });
+    });
     setSelected(new Set());
   }, []);
 
@@ -48,18 +67,7 @@ export function Manager() {
     load();
   }, [load]);
 
-  const dirty = useMemo(
-    () =>
-      (rows ?? []).filter(
-        (r) =>
-          r.place !== r.photo.place ||
-          r.season !== r.photo.season ||
-          r.alt !== r.photo.alt ||
-          r.rating !== ratingOf(r.photo) ||
-          !sameTags(r.tags, r.photo.tags ?? []),
-      ),
-    [rows],
-  );
+  const dirty = useMemo(() => (rows ?? []).filter(isDirty), [rows]);
 
   const onChange = useCallback((items: EditItem[]) => {
     setRows((prev) => {

@@ -4,7 +4,10 @@
 // empty entry. Files that came out of a folder are kept apart from loose ones
 // so the uploader can apply its folder rule (rated files only) to them.
 
-export type Dropped = { loose: File[]; fromFolders: File[] };
+/** A file with the folder it came from ("" for a loose file). */
+export type Located = { file: File; dir: string };
+
+export type Dropped = { loose: File[]; fromFolders: Located[] };
 
 function readAll(reader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> {
   // readEntries returns batches (Chrome: 100 at a time) until an empty one.
@@ -26,9 +29,10 @@ function fileOf(entry: FileSystemFileEntry): Promise<File> {
   return new Promise((resolve, reject) => entry.file(resolve, reject));
 }
 
-async function walk(entry: FileSystemEntry, out: File[]): Promise<void> {
+async function walk(entry: FileSystemEntry, out: Located[]): Promise<void> {
   if (entry.isFile) {
-    out.push(await fileOf(entry as FileSystemFileEntry));
+    const file = await fileOf(entry as FileSystemFileEntry);
+    out.push({ file, dir: entry.fullPath.replace(/^\//, "").replace(/\/[^/]*$/, "") });
   } else if (entry.isDirectory) {
     const entries = await readAll((entry as FileSystemDirectoryEntry).createReader());
     for (const e of entries) await walk(e, out);
@@ -37,7 +41,7 @@ async function walk(entry: FileSystemEntry, out: File[]): Promise<void> {
 
 export async function collectDropped(dt: DataTransfer): Promise<Dropped> {
   const loose: File[] = [];
-  const fromFolders: File[] = [];
+  const fromFolders: Located[] = [];
   const items = [...dt.items];
   const entries = items.map((it) => (it.kind === "file" && "webkitGetAsEntry" in it ? it.webkitGetAsEntry() : null));
   if (entries.some((e) => e !== null)) {
@@ -53,6 +57,11 @@ export async function collectDropped(dt: DataTransfer): Promise<Dropped> {
     loose.push(...dt.files);
   }
   return { loose, fromFolders };
+}
+
+/** Files from a `webkitdirectory` input, with their folder taken from the relative path. */
+export function locateInput(list: FileList): Located[] {
+  return [...list].map((file) => ({ file, dir: file.webkitRelativePath.replace(/\/[^/]*$/, "") }));
 }
 
 /** True while the drag carries files, so the zone can light up only for them. */

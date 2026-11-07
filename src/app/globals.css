@@ -12,7 +12,9 @@
   --color-paper: oklch(98.6% 0.004 80);
   --color-paper-2: oklch(96.4% 0.006 78);
   --color-paper-3: oklch(93.5% 0.008 76);
-  --font-body: "Sentient", Georgia, serif;
+  /* Sentient has no Hangul: Noto Serif KR takes over for Korean captions and text. */
+  --font-display: "Sentient", "Noto Serif KR", Georgia, serif;
+  --font-body: "Sentient", "Noto Serif KR", Georgia, serif;
   --side-width: 240px;
   --stream-cols: 3;
 }
@@ -246,6 +248,11 @@ h2 {
   color: var(--color-muted);
   line-height: 1.4;
   min-height: 1lh;
+}
+
+/* The place sits at the photograph's lower right, like a pencilled note. */
+.stream figcaption {
+  text-align: right;
 }
 
 .stream-empty {

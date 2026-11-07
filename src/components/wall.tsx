@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { Lightbox } from "@/components/lightbox";
+import { useLightbox } from "@/components/use-lightbox";
 import { weightedOrder, type Photo } from "@/lib/photos";
 
 type Props = { photos: Photo[] };
@@ -80,7 +81,7 @@ export function Wall({ photos }: Props) {
   const units = useUnits();
   const list = useMemo(() => (seed === null ? photos : weightedOrder(photos, mulberry32(seed))), [photos, seed]);
   const rows = useMemo(() => justify(list, units), [list, units]);
-  const [open, setOpen] = useState<number | null>(null);
+  const { open, setOpen, openBox, closeBox, leaveTo } = useLightbox();
   const indexOf = new Map(list.map((p, i) => [p.id, i]));
 
   if (list.length === 0) {
@@ -104,7 +105,7 @@ export function Wall({ photos }: Props) {
                   type="button"
                   className="wall-cell"
                   style={{ width: `${(((p.preview.width || 3) / (p.preview.height || 2)) / sum) * 100}%` }}
-                  onClick={() => setOpen(indexOf.get(p.id) ?? 0)}
+                  onClick={() => openBox(indexOf.get(p.id) ?? 0)}
                   aria-label={`Open ${p.place || "photograph"} at full size`}
                 >
                   <img
@@ -121,7 +122,9 @@ export function Wall({ photos }: Props) {
           );
         })}
       </div>
-      {open !== null && <Lightbox photos={list} index={open} onChange={setOpen} onClose={() => setOpen(null)} />}
+      {open !== null && (
+        <Lightbox photos={list} index={open} onChange={setOpen} onClose={closeBox} onNavigate={leaveTo} />
+      )}
     </>
   );
 }

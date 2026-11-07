@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { Lightbox } from "@/components/lightbox";
+import { useLightbox } from "@/components/use-lightbox";
 import { weightedOrder, type Photo } from "@/lib/photos";
 
 type Props = { photos: Photo[] };
@@ -58,7 +59,7 @@ export function Stream({ photos }: Props) {
   const list = useMemo(() => (seed === null ? photos : weightedOrder(photos, mulberry32(seed))), [photos, seed]);
   const dealt = useMemo(() => distribute(list, columns), [list, columns]);
 
-  const [open, setOpen] = useState<number | null>(null);
+  const { open, setOpen, openBox, closeBox, leaveTo } = useLightbox();
 
   if (list.length === 0) {
     return (
@@ -79,7 +80,7 @@ export function Stream({ photos }: Props) {
                   <button
                     type="button"
                     className="stream-open"
-                    onClick={() => setOpen(index)}
+                    onClick={() => openBox(index)}
                     aria-label={`Open ${photo.place || "photograph"} at full size`}
                   >
                     <img
@@ -99,7 +100,9 @@ export function Stream({ photos }: Props) {
           </ul>
         ))}
       </div>
-      {open !== null && <Lightbox photos={list} index={open} onChange={setOpen} onClose={() => setOpen(null)} />}
+      {open !== null && (
+        <Lightbox photos={list} index={open} onChange={setOpen} onClose={closeBox} onNavigate={leaveTo} />
+      )}
     </>
   );
 }

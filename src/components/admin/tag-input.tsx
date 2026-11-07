@@ -47,6 +47,19 @@ export function TagInput({ value, onChange, suggestions = [], placeholder, id, c
 
   const remove = (t: string) => onChange(value.filter((x) => x !== t));
 
+  // "a, b c" pasted becomes three chips at once (a copied tag list, or words from anywhere).
+  const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text");
+    const parts = pasted.split(/[,\s]+/).map(clean).filter(Boolean);
+    if (parts.length < 2) return;
+    e.preventDefault();
+    const next = [...value];
+    for (const t of [clean(text), ...parts]) if (t && !next.includes(t)) next.push(t);
+    onChange(next);
+    setText("");
+    setActive(0);
+  };
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === " " || e.key === "," || e.key === "Enter" || (e.key === "Tab" && q)) {
       e.preventDefault();
@@ -101,6 +114,7 @@ export function TagInput({ value, onChange, suggestions = [], placeholder, id, c
           setOpen(true);
         }}
         onKeyDown={onKeyDown}
+        onPaste={onPaste}
         onFocus={() => setOpen(true)}
         onBlur={() => {
           // Commit what was typed so a click elsewhere never loses a tag.
