@@ -92,4 +92,4 @@ Each file becomes a preview (WebP, 1600px long edge) and a full-size JPEG (3000p
 
 ## License
 
-No license file yet: add one (MIT is the usual choice for a template) before inviting others to use the code. The Hallmark and Impeccable skills under `.claude/` carry their own licenses.
+[MIT](./LICENSE): free to use, copy, change and redistribute, for any purpose. The Hallmark and Impeccable skills under `.claude/` carry their own licenses; photographs on a deployed site belong to whoever took them.
